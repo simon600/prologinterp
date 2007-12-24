@@ -1,6 +1,0 @@
-#summary One-sentence summary of this page.
-
-= Introduction =
-
-This wiki contains info about a simple prolog interpreter, written in OCaml.
-Currently, the is no more information on that.
