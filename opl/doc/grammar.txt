@@ -1,0 +1,29 @@
+fact ::= clause '.'
+
+clause ::= predicate ':-' predicate '.'
+
+predicate ::= structure
+
+structure ::= 
+	  prefixop argument
+	| argument postfix
+        | argument infix argument 
+	| functor"(" arguments ")" 
+	| functor 
+	| list
+
+list ::= '[' ']' | '[' arguments ']' | '[' arguments '|' arguments ']'
+
+arguments::= argument | argument ',' arguments
+
+argument::= constant | variable | structure
+
+constant::= number | string | atom | byte_array,
+
+atom::= to my juz wiemy 
+string::=  ''' {char}* '''
+byte_array ::= '"' {char}* '"'
+
+variable::= ("_"|"A".."Z") { letters | digits | '_' }*
+functor ::= atom 
+
