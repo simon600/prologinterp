@@ -1,0 +1,544 @@
+<html><head><!-- This HTML file has been created by texi2html 1.52
+     from sicstus.tex on 6 October 1998 --><title>SICStus Prolog - Full Prolog Syntax</title><script charset="utf-8" id="injection_graph_func" src="sicstus_45_files/injection_graph_func.js"></script></head><body>
+Go to the <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_1.html">first</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_44.html">previous</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_46.html">next</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_50.html">last</a> section, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html">table of contents</a>.
+<p></p><hr><p>
+
+
+</p><h1><a name="SEC367" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC367">Full Prolog Syntax</a></h1>
+
+<p>
+A Prolog program consists of a sequence of <em>sentences</em> or lists of
+sentences.  Each sentence is a Prolog <em>term</em>.  How terms are
+interpreted as sentences is defined below (see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC369">Syntax of Sentences as Terms</a>).  Note that
+a term representing a sentence may be written in any of its equivalent
+syntactic forms.  For example, the 2-ary functor <samp>`:-'</samp> could be
+written in standard prefix notation instead of as the usual infix
+operator.  
+</p>
+<p>
+Terms are written as sequences of <em>tokens</em>.  Tokens are sequences of
+characters which are treated as separate symbols.  Tokens include the
+symbols for variables, constants and functors, as well as punctuation
+characters such as brackets and commas.
+
+</p>
+<p>
+We define below how lists of tokens are interpreted as terms
+(see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC370">Syntax of Terms as Tokens</a>).  Each list of tokens which is read in (for
+interpretation as a term or sentence) has to be terminated by a
+full-stop token.  Two tokens must be separated by a layout-text token if
+they could otherwise be interpreted as a single token.  Layout-text
+tokens are ignored when interpreting the token list as a term, and may
+appear at any point in the token list.  
+</p>
+<p>
+We define below defines how tokens are represented as strings of
+characters (see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC371">Syntax of Tokens as Character Strings</a>).  But we start by describing the
+notation used in the formal definition of Prolog syntax (see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC368">Notation</a>).  
+</p>
+
+<ul>
+<li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC368">Syntax Notation</a>
+</li><li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC369">Sentence</a>
+</li><li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC370">Term Token</a>
+</li><li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC371">Token String</a>
+</li><li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC372">Escape Sequences</a>
+</li><li><a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC373">Syntax Notes</a>
+</li></ul>
+
+
+
+<h2><a name="SEC368" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC368">Notation</a></h2>
+
+
+<ol>
+<li>
+
+Syntactic categories (or <em>non-terminals</em>) are written thus:
+<var>item</var>.  Depending on the section, a category may represent a class
+of either terms, token lists, or character strings.  </li><li>
+
+A syntactic rule takes the general form 
+
+
+<pre><var>C</var> --&gt; <var>F1</var> | <var>F2</var> | <var>F3</var>
+</pre>
+
+which states that an entity of category <var>C</var> may take any of the
+alternative forms <var>F1</var>, <var>F2</var>, <var>F3</var>, etc.  </li><li>
+
+Certain definitions and restrictions are given in ordinary English,
+enclosed in { } brackets.  </li><li>
+
+A category written as <var>C...</var> denotes a sequence of one or more
+<var>C</var>s.  </li><li>
+
+A category written as <var>?C</var> denotes an optional <var>C</var>.
+Therefore <var>?C...</var> denotes a sequence of zero or more
+<var>C</var>s.</li><li>
+
+A few syntactic categories have names with arguments, and rules in which
+they appear may contain meta-variables looking thus: <var>X</var>.  The meaning
+of such rules should be clear from analogy with the definite clause
+grammars (see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_10.html#SEC95">Term and Goal Expansion</a>).  </li><li>
+
+In the section describing the syntax of terms and tokens (see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html#SEC370">Syntax of Terms as Tokens</a>) particular tokens of the category name are written thus:
+<var>name</var>, while tokens which are individual punctuation characters are
+written literally.  </li></ol>
+
+
+
+<h2><a name="SEC369" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC369">Syntax of Sentences as Terms</a></h2>
+
+
+<pre><var>sentence</var>          --&gt; <var>module</var> <kbd>:</kbd> <var>sentence</var>
+                   |  <var>list</var>
+                         { where <var>list</var> is a list of <var>sentence</var> }
+                   |  <var>clause</var>
+                   |  <var>directive</var>
+                   |  <var>grammar-rule</var>
+
+<var>clause</var>            --&gt; <var>non-unit-clause</var> | <var>unit-clause</var>
+
+<var>directive</var>         --&gt; <var>command</var> | <var>query</var>
+
+<var>non-unit-clause</var>   --&gt; <var>head</var> <kbd>:-</kbd> <var>body</var>
+
+<var>unit-clause</var>       --&gt; <var>head</var>
+                         { where <var>head</var> is not otherwise a <var>sentence</var> }
+
+<var>command</var>           --&gt; <kbd>:-</kbd> <var>body</var>
+
+<var>query</var>             --&gt; <kbd>?-</kbd> <var>body</var>
+
+<var>head</var>              --&gt; <var>module</var> <kbd>:</kbd> <var>head</var>
+                   |  <var>goal</var>
+                         { where <var>goal</var> is not a <var>variable</var> }
+
+<var>body</var>             --&gt; <var>module</var> <kbd>:</kbd> <var>body</var>
+                   |  <var>body</var> <kbd>-&gt;</kbd> <var>body</var> <kbd>;</kbd> <var>body</var>
+                   |  <var>body</var> <kbd>-&gt;</kbd> <var>body</var>
+                   |  <kbd>\+</kbd> <var>body</var>
+                   |  <var>body</var> <kbd>;</kbd> <var>body</var>
+                   |  <var>body</var> <kbd>,</kbd> <var>body</var>
+                   |  <var>goal</var>
+
+<var>goal</var>              --&gt; <var>term</var>
+                         { where <var>term</var> is not otherwise a <var>body</var> }
+
+<var>grammar-rule</var>      --&gt; <var>gr-head</var> <kbd>--&gt;</kbd> <var>gr-body</var>
+
+<var>gr-head</var>           --&gt; <var>module</var> <kbd>:</kbd> <var>gr-head</var>
+                   |  <var>gr-head</var> <kbd>,</kbd> <var>terminals</var>
+                   |  <var>non-terminal</var>
+                         { where <var>non-terminal</var> is not a <var>variable</var> }
+
+<var>gr-body</var>           --&gt; <var>module</var> <kbd>:</kbd> <var>gr-body</var>
+                   |  <var>gr-body</var> <kbd>-&gt;</kbd> <var>gr-body</var> <kbd>;</kbd> <var>gr-body</var>
+                   |  <var>gr-body</var> <kbd>-&gt;</kbd> <var>gr-body</var>
+                   |  <kbd>\+</kbd> <var>gr-body</var>
+                   |  <var>gr-body</var> <kbd>;</kbd> <var>gr-body</var>
+                   |  <var>gr-body</var> <kbd>,</kbd> <var>gr-body</var>
+                   |  <var>non-terminal</var>
+                   |  <var>terminals</var>
+                   |  <var>gr-condition</var>
+
+<var>non-terminal</var>      --&gt; <var>term</var>
+                         { where <var>term</var> is not otherwise a <var>gr-body</var> }
+
+<var>terminals</var>         --&gt; <var>list</var> | <var>string</var>
+
+<var>gr-condition</var>      --&gt; <kbd>!</kbd> | <kbd>{</kbd> <var>body</var> <kbd>}</kbd>
+
+<var>module</var>            --&gt; <var>atom</var>
+</pre>
+
+
+
+<h2><a name="SEC370" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC370">Syntax of Terms as Tokens</a></h2>
+
+
+<pre><var>term-read-in</var>      --&gt; <var>subterm(1200)</var> <var>full-stop</var>
+
+<var>subterm(N)</var>        --&gt; <var>term(M)</var>
+                         { where <var>M</var> is less than or equal to <var>N</var> }
+
+<var>term(N)</var>           --&gt; <var>op(N,fx)</var> <var>subterm(N-1)</var>
+                         { except in the case of a <var>number</var> }
+                         { if <var>subterm</var> starts with a <kbd>(</kbd>,
+                           <var>op</var> must be followed by <var>layout-text</var> }
+                   |  <var>op(N,fy)</var> <var>subterm(N)</var>
+                         { if <var>subterm</var> starts with a <kbd>(</kbd>,
+                           <var>op</var> must be followed by <var>layout-text</var> }
+                   |  <var>subterm(N-1)</var> <var>op(N,xfx)</var> <var>subterm(N-1)</var>
+                   |  <var>subterm(N-1)</var> <var>op(N,xfy)</var> <var>subterm(N)</var>
+                   |  <var>subterm(N)</var> <var>op(N,yfx)</var> <var>subterm(N-1)</var>
+                   |  <var>subterm(N-1)</var> <var>op(N,xf)</var>
+                   |  <var>subterm(N)</var> <var>op(N,yf)</var>
+
+<var>term(1000)</var>        --&gt; <var>subterm(999)</var> <kbd>,</kbd> <var>subterm(1000)</var>
+
+<var>term(0)</var>           --&gt; <var>functor</var> <kbd>(</kbd> <var>arguments</var> <kbd>)</kbd>
+                         { provided there is no <var>layout-text</var> between
+                           the <var>functor</var> and the <kbd>(</kbd> }
+                   |  <kbd>(</kbd> <var>subterm(1200)</var> <kbd>)</kbd>
+                   |  <kbd>{</kbd> <var>subterm(1200)</var> <kbd>}</kbd>
+                   |  <var>list</var>
+                   |  <var>string</var>
+                   |  <var>constant</var>
+                   |  <var>variable</var>
+
+<var>op(N,T)</var>           --&gt; <var>name</var>
+                         { where <var>name</var> has been declared as an
+                           operator of type <var>T</var> and precedence <var>N</var> }
+
+<var>arguments</var>         --&gt; <var>subterm(999)</var>
+                   |  <var>subterm(999)</var> <kbd>,</kbd> <var>arguments</var>
+
+<var>list</var>              --&gt; <kbd>[]</kbd>
+                   |  <kbd>[</kbd> <var>listexpr</var> <kbd>]</kbd>
+
+<var>listexpr</var>          --&gt; <var>subterm(999)</var>
+                   |  <var>subterm(999)</var> <kbd>,</kbd> <var>listexpr</var>
+                   |  <var>subterm(999)</var> <kbd>|</kbd> <var>subterm(999)</var>
+
+<var>constant</var>          --&gt; <var>atom</var> | <var>number</var>
+
+<var>number</var>            --&gt; <var>unsigned-number</var>
+                   |  <var>sign</var> <var>unsigned-number</var>
+                   |  <var>sign</var> <kbd>inf</kbd>
+                   |  <var>sign</var> <kbd>nan</kbd>
+
+<var>unsigned-number</var>   --&gt; <var>natural-number</var> | <var>unsigned-float</var>
+
+<var>atom</var>              --&gt; <var>name</var>
+
+<var>functor</var>           --&gt; <var>name</var>
+</pre>
+
+
+
+<h2><a name="SEC371" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC371">Syntax of Tokens as Character Strings</a></h2>
+
+<p>
+<a name="IDX1553"></a>
+By default, SICStus Prolog uses the ISO 8859/1 character set standard, but will
+alternatively support the EUC (Extended UNIX Code) standard.  This is
+governed by the value of the environment variable <code>SP_CTYPE</code>
+(see section <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_4.html#SEC11">Getting Started</a>).
+
+</p>
+<p>
+The character categories used below are defined as follows in the two
+standards:
+
+</p>
+<dl compact="compact">
+
+<dt><var>layout-char</var>
+</dt><dd>
+In ISO 8859/1, these are character codes 0..32 and 127..159.  In EUC,
+these are character codes 0..32 and 127.  The common subset includes
+characters such as <kbd>TAB</kbd>, <kbd>LFD</kbd>, and <kbd>SPC</kbd>.
+
+</dd><dt><var>small-letter</var>
+</dt><dd>
+In ISO 8859/1, these are character codes 97..122, 223..246, and 248..255.
+In EUC, these are character codes 97..122 and 128..255.  The common subset
+includes the letters <kbd>a</kbd> through <kbd>z</kbd>.
+
+</dd><dt><var>capital-letter</var>
+</dt><dd>
+In ISO 8859/1, these are character codes 65..90, 192..214, and 216..222.  In
+EUC, these are character codes 65..90.  The common subset is the letters
+<kbd>A</kbd> through <kbd>Z</kbd>.
+
+</dd><dt><var>digit</var>
+</dt><dd>
+In both standards, these are character codes 48..57, i.e. the digits
+<kbd>0</kbd> through <kbd>9</kbd>.
+
+</dd><dt><var>symbol-char</var>
+</dt><dd>
+In ISO 8859/1, these are character codes 35, 36, 38, 42, 43, 45..47, 58,
+60..64, 92, 94, 96, 126, 160..191, 215, and 247.  In EUC, these are
+character codes 35, 36, 38, 42, 43, 45..47, 58, 60..64, 92, 94, 96, and 126.
+The common subset is<br>
+<kbd>+</kbd><kbd>-</kbd><kbd>*</kbd><kbd>/</kbd><kbd>\</kbd><kbd>^</kbd><kbd>&lt;</kbd><kbd>&gt;</kbd><kbd>=</kbd><kbd>`</kbd><kbd>~</kbd><kbd>:</kbd><kbd>.</kbd><kbd>?</kbd><kbd>@</kbd><kbd>#</kbd><kbd>$</kbd><kbd>&amp;</kbd>.
+
+</dd><dt><var>solo-char</var>
+</dt><dd>
+In both standards, these are character codes 33 and 59 i.e. the
+characters <kbd>!</kbd> and <kbd>;</kbd>.
+
+</dd><dt><var>punctuation-char</var>
+</dt><dd>
+In both standards, these are character codes 37, 40, 41, 44, 91, 93, and
+123..125, i.e. the characters <kbd>%(),[]{|}</kbd>.
+
+</dd><dt><var>quote-char</var>
+</dt><dd>
+In both standards, these are character codes 34 and 39 i.e. the
+characters <kbd>"</kbd> and <kbd>'</kbd>.
+
+</dd><dt><var>underline</var>
+</dt><dd>
+In both standards, this is character code 95 i.e. the character
+<kbd>_</kbd>.
+</dd></dl>
+
+
+<pre><var>token</var>             --&gt; <var>name</var>
+                   |  <var>natural-number</var>
+                   |  <var>unsigned-float</var>
+                   |  <var>variable</var>
+                   |  <var>string</var>
+                   |  <var>punctuation-char</var>
+                   |  <var>layout-text</var>
+                   |  <var>full-stop</var>
+
+<var>name</var>              --&gt; <var>quoted-name</var>
+                   |  <var>word</var>
+                   |  <var>symbol</var>
+                   |  <var>solo-char</var>
+                   |  <kbd>[</kbd> <var>?layout-text</var> <kbd>]</kbd>
+                   |  <kbd>{</kbd> <var>?layout-text</var> <kbd>}</kbd>
+
+<var>quoted-name</var>       --&gt; <kbd>'</kbd> <var>?quoted-item...</var> <kbd>'</kbd>
+
+<var>quoted-item</var>       --&gt; <var>char</var>  { other than <kbd>'</kbd> or <kbd>\</kbd> }
+                   |  <kbd>''</kbd>
+                   |  <kbd>\</kbd> <var>escape-sequence</var>
+
+<var>word</var>              --&gt; <var>small-letter</var> <var>?alpha...</var>
+
+<var>symbol</var>            --&gt; <var>symbol-char...</var>
+                         { except in the case of a <var>full-stop</var>
+                           or where the first 2 chars are <kbd>/*</kbd> }
+
+<var>natural-number</var>    --&gt; <var>digit...</var>
+                   |  <var>base</var> <kbd>'</kbd> <var>alpha...</var>
+                         { where each <var>alpha</var> must be less than the <var>base</var>,
+                         treating a,b,... and A,B,... as 10,11,... }
+                   |  <kbd>0</kbd> <kbd>'</kbd> <var>char-item</var>
+                         { yielding the character code for <var>char</var> }
+
+<var>char-item</var>         --&gt; <var>char</var>  { other than <kbd>\</kbd> }
+                   |  <kbd>\</kbd> <var>escape-sequence</var>
+  
+<var>base</var>              --&gt; <var>digit...</var>  { in the range [2..36] }
+
+<var>unsigned-float</var>    --&gt; <var>simple-float</var>
+                   |  <var>simple-float</var> <var>exp</var> <var>exponent</var>
+
+<var>simple-float</var>      --&gt; <var>digit...</var> <kbd>.</kbd> <var>digit...</var>
+
+<var>exp</var>               --&gt; <kbd>e</kbd>  |  <kbd>E</kbd>
+
+<var>exponent</var>          --&gt; <var>digit...</var> | <var>sign</var> <var>digit...</var>
+
+<var>sign</var>              --&gt; <kbd>-</kbd> | <kbd>+</kbd>
+
+<var>variable</var>          --&gt; <var>underline</var> <var>?alpha...</var>
+                   |  <var>capital-letter</var> <var>?alpha...</var>
+
+<var>string</var>            --&gt; <kbd>"</kbd> <var>?string-item...</var> <kbd>"</kbd>
+
+<var>string-item</var>       --&gt; <var>char</var>  { other than <kbd>"</kbd> or <kbd>\</kbd> }
+                   |  <kbd>""</kbd>
+                   |  <kbd>\</kbd> <var>escape-sequence</var>
+
+<var>layout-text</var>             --&gt; <var>layout-text-item...</var>
+
+<var>layout-text-item</var>        --&gt; <var>layout-char</var> | <var>comment</var>
+
+<var>comment</var>           --&gt; <kbd>/*</kbd> <var>?char...</var> <kbd>*/</kbd>
+                         { where <var>?char...</var> must not contain <kbd>*/</kbd> }
+                   |  <kbd>%</kbd> <var>?char...</var> <kbd>LFD</kbd>
+                         { where <var>?char...</var> must not contain <kbd>LFD</kbd> }
+
+<var>full-stop</var>         --&gt; <kbd>.</kbd>
+                         { the following token, if any, must be <var>layout-text</var>}
+
+<var>char</var>              --&gt; { any character, i.e. }
+                      <var>layout-char</var>
+                   |  <var>alpha</var>
+                   |  <var>symbol-char</var>
+                   |  <var>solo-char</var>
+                   |  <var>punctuation-char</var>
+                   |  <var>quote-char</var>
+
+<var>alpha</var>             --&gt; <var>capital-letter</var> | <var>small-letter</var> | <var>digit</var> | <var>underline</var>
+
+<var>escape-sequence</var>   --&gt; b        { backspace, character code 8 }
+                   |  t        { horizontal tab, character code 9 }
+                   |  n        { newline, character code 10 }
+                   |  v        { vertical tab, character code 11 }
+                   |  f        { form feed, character code 12 }
+                   |  r        { carriage return, character code 13 }
+                   |  e        { escape, character code 27 }
+                   |  d        { delete, character code 127 }
+                   |  a        { alarm, character code 7 }
+                   |  x <var>alpha</var> <var>alpha</var>
+                         {treating a,b,... and A,B,... as 10,11,... }
+                               { in the range [0..15], hex character code }
+                   |  <var>digit</var> <var>?digit</var> <var>?digit</var> 
+                               { in the range [0..7], octal character code }
+                   |  ^ ?      { delete, character code 127 }
+                   |  ^ <var>capital-letter</var>
+                   |  ^ <var>small-letter</var>
+                               { the control character <var>alpha</var> mod 32 }
+                   |  c <var>?layout-char</var>... { ignored }
+                   |  <var>layout-char</var>  { ignored }
+                   |  <var>char</var>    { other than the above, represents itself }
+</pre>
+
+
+
+<h2><a name="SEC372" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC372">Escape Sequences</a></h2>
+<p>
+<a name="IDX1554"></a>
+<a name="IDX1555"></a>
+
+</p>
+<p>
+A backslash occurring inside integers in <samp>`0''</samp> notation or inside
+quoted atoms or strings has special meaning, and indicates the start
+of an escape sequence.
+Character escaping can be turned off for compatibility with old code.
+The following escape sequences exist:
+
+</p>
+<dl compact="compact">
+
+<dt><code>\b</code>
+</dt><dd>
+backspace (character code 8)
+
+</dd><dt><code>\t</code>
+</dt><dd>
+horizontal tab (character code 9)
+
+</dd><dt><code>\n</code>
+</dt><dd>
+newline (character code 10)
+
+</dd><dt><code>\v</code>
+</dt><dd>
+vertical tab (character code 11)
+
+</dd><dt><code>\f</code>
+</dt><dd>
+form feed (character code 12)
+
+</dd><dt><code>\r</code>
+</dt><dd>
+carriage return (character code 13)
+
+</dd><dt><code>\e</code>
+</dt><dd>
+escape (character code 27)
+
+</dd><dt><code>\d</code>
+</dt><dd>
+</dd><dt><code>\^?</code>
+</dt><dd>
+delete (character code 127)
+
+</dd><dt><code>\a</code>
+</dt><dd>
+alarm (character code 7)
+
+</dd><dt><code>\x<var>CD</var></code>
+</dt><dd>
+the character code <var>CD</var> (two hexadecimal digits)
+
+</dd><dt><code>\<var>octal</var></code>
+</dt><dd>
+the character code <var>octal</var> base 8, where <var>octal</var> is up to 3 octal digits
+
+</dd><dt><code>\^<var>char</var></code>
+</dt><dd>
+the character code <code><var>char</var> mod 32</code>, where <var>char</var> is a letter.
+
+</dd><dt><code>\<var>layout-char</var></code>
+</dt><dd>
+A single layout character, for example a newline, is ignored.
+
+</dd><dt><code>\c</code>
+</dt><dd>
+All characters up to, but not including, the next non-layout character are ignored.
+
+</dd><dt><code>\<var>other</var></code>
+</dt><dd>
+A character not mentioned in this table stands for itself.  For example,
+<samp>`\\'</samp> inserts a single backslash and <samp>`\''</samp> inserts a single
+quote.
+</dd></dl>
+
+
+
+<h2><a name="SEC373" href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html#TOC373">Notes</a></h2>
+
+
+<ol>
+<li>
+
+The expression of precedence 1000 (i.e. belonging to syntactic category
+<var>term(1000)</var>) which is written
+
+
+<pre><var>X</var>,<var>Y</var>
+</pre>
+
+denotes the term <code>','(<var>X</var>,<var>Y</var>)</code> in standard syntax.
+
+</li><li>
+
+The parenthesized expression (belonging to syntactic category
+<var>term(0)</var>) 
+
+<pre>(<var>X</var>)
+</pre>
+
+denotes simply the term <code><var>X</var></code>.
+
+</li><li>
+
+The curly-bracketed expression (belonging to syntactic category
+<var>term(0)</var>) 
+
+<pre>{<var>X</var>}
+</pre>
+
+denotes the term <code>{}(<var>X</var>)</code> in standard syntax.
+</li><li>
+
+Note that, for example, <code>-3</code> denotes a number whereas <code>-(3)</code>
+denotes a compound term which has the 1-ary functor <code>-</code> as its
+principal functor.  
+</li><li>
+
+The character <kbd>"</kbd> within a string must be written duplicated.
+Similarly for the character <kbd>'</kbd> within a quoted atom.  
+</li><li>
+
+Backslashes in strings, quoted atoms, and integers written in <samp>`0''</samp>
+notation denote escape sequences. 
+</li><li>
+
+A name token declared to be a prefix operator will be treated as an atom
+only if no <var>term-read-in</var> can be read by treating it as a prefix
+operator.
+
+</li><li>
+
+A name token declared to be both an infix and a postfix operator will be
+treated as a postfix operator only if no <var>term-read-in</var> can be read
+by treating it as an infix operator.
+</li></ol>
+
+<p></p><hr><p>
+Go to the <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_1.html">first</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_44.html">previous</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_46.html">next</a>, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_50.html">last</a> section, <a href="http://www.sics.se/sicstus/docs/3.7.1/html/sicstus_toc.html">table of contents</a>.
+
+</p></body></html>
