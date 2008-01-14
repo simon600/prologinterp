@@ -12,5 +12,4 @@ del *cmi
 del *cmo
 del lexer.ml
 del parser.mli
-rem del parser.ml
 echo Finished.
