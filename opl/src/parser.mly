@@ -1,8 +1,7 @@
 %{
 
 (* --- Header --- *)
-   open Lexer;;
- 
+  
 %}
 
 /* ocamlyacc declarations */
