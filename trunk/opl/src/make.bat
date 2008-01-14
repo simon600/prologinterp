@@ -1,5 +1,7 @@
 @echo off
 echo Compiling to destination ../bin/opl.exe
+echo.
+ocamlc -c types.ml
 ocamlyacc parser.mly
 ocamlc -c parser.mli
 ocamlc -c parser.ml
@@ -10,5 +12,5 @@ del *cmi
 del *cmo
 del lexer.ml
 del parser.mli
-del parser.ml
-echo Compiled successfully.
+rem del parser.ml
+echo Finished.
