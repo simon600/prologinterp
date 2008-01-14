@@ -46,7 +46,8 @@ rule token = parse
         | whitespace            
         {       token lexbuf    }
 
-        | "." { DOT }  
+        | "." 
+        {       DOT     }  
         
         | float_number          
         {
