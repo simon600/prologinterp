@@ -1,17 +1,70 @@
 open Parser;;
 open Lexer;;
 
+(* 
+ * reading database from input files.
+ * params - program parameters
+ *)
+
+let read_database params = 
+
+    let database = ref []           (* database we create *)
+    in          
+
+    (* 
+     * function reading a file and extendind actual database 
+     * filename: file to read from.
+     *)
+
+    let extend_database filename =                          
+        try
+            let source      = open_in filename in           (* input channel *)
+            let file_length = in_channel_length source in   (* total file length *)
+            let buffer      = String.create file_length     (* buffer we read into *)
+            in begin
+                    really_input source buffer 0 (file_length - 1);     (* reading from file, forcing to read everything into buffer *)
+                    database :=                                         (* extending database with parsed input *) 
+                        (Parser.sentence_list Lexer.token (Lexing.from_string buffer)) @ !database
+               end
+        with 
+            | Sys_error s -> print_endline ((Filename.basename filename)^ ": " ^ s)        (* case of system error *)
+            | End_of_file -> ()                                                            (* shouldn't happen, but who knows *)
+            |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) 
+    in
+
+    begin
+        let parameters = match Array.length params with              (* the first argument of the program is it's name *)
+                            |  1  -> Array.make 0 ""                 (* omit the first parameter - case it's the only one *)
+                            |  i  -> Array.sub params 1 (i - 1)      (* omit the first parameter - case of more than 1 parameter *)
+        in
+            Array.iter (fun filename -> if Sys.file_exists filename         (* check if the file in param exists in filesystem *)
+                                        then extend_database filename       (* try to extend database with file contents *)
+                                        else print_endline                  (* warn user *)
+                                                ("File " ^ (Filename.basename filename) ^ " does not exist."))   
+                        parameters;
+            !database                                           (* return created database *)
+    end
+;;
+
+
+(*
+ *  main interpreter function.
+ *)
 let main () =
-    let buff = ref (Lexing.from_string(""))
+
+    let database = read_database Sys.argv                       (* first, we have to read knowledge database *) 
+    and buff     = ref (Lexing.from_string(""))                 (* then we run interpreter *)
     in 
     	try 
 	   while (true) do					(* while not EOF *)
 	    	print_string ":- ";				(* print prompt *)
 		buff := Lexing.from_string(read_line());	(* read the expression *)
-		Parser.sentence Lexer.token !buff	(* create its syntax tree*)                    
+		ignore (Parser.sentence_list Lexer.token !buff) (* create its syntax tree*)                    
            done
 	with
 	    | End_of_file -> (print_string "\n"; exit 0)
+            |   Failure s -> (print_endline s; exit 0)
+            |      _      -> (print_endline "Error occured."; exit 0)
 ;;
 
 let _ = main ()  

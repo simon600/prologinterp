@@ -84,16 +84,17 @@
 %nonassoc COLONHYPHEN
 %nonassoc DOT
 
-%type <unit> sentence
-%start sentence
+%type <Types.term list> sentence_list
+%start sentence_list
 
 
 /* grammar rules */
 
 %%
 
-sentence: 
-    | clause DOT { ignore $1 } 
+sentence_list: 
+    | clause DOT sentence_list { $1 :: $3 }
+    | clause DOT { [$1] } 
 ;
 
 clause:
