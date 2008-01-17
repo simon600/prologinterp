@@ -87,34 +87,40 @@
 %type <Types.term list> sentence_list
 %start sentence_list
 
+%type <Types.term> query
+%start query
 
 /* grammar rules */
 
 %%
 
 sentence_list: 
-    | clause DOT sentence_list { $1 :: $3 }
-    | clause DOT { [$1] } 
+    | clause DOT sentence_list { print_endline "multiclause"; $1 :: $3 }
+    | clause DOT { print_endline "single_clause"; [$1] } 
+;
+
+query:
+    | clause DOT { print_endline "query clause"; $1 }
 ;
 
 clause:
-    | head COLONHYPHEN body { $1 }
-    | head { $1 }
+    | head COLONHYPHEN body { print_endline "head :- body"; $1 }
+    | head { print_endline "head"; $1 }
 ;
 
 head:
-    | goal { $1 }
+    | goal { print_endline "head goal"; $1 }
 ;
 
 body:
-    | goal ARROW body { $1 }
-    | goal SEMICOLON body { $1 }
-    | goal COMMA body { $1 }
-    | goal { $1 }
+    | goal ARROW body { print_endline "goal -> body"; $1 }
+    | goal SEMICOLON body { print_endline "goal ; body"; $1 }
+    | goal COMMA body { print_endline "goal , body"; $1 }
+    | goal { print_endline "body goal"; $1 }
 ;
 
 goal:
-    | term { $1 }
+    | term { print_endline "goal"; $1 }
 ;
 
 term:
@@ -160,16 +166,16 @@ term2:
 /* the semantic action below should change according to the way assignment is solved */
 
 term1:
-    | VARIABLE IS arithmetic { ignore $1; Types.TermConstant (Types.ConstantNumber $3) }
-    | term0 { $1 }
+    | VARIABLE IS arithmetic { print_endline "variable is"; ignore $1; Types.TermConstant (Types.ConstantNumber $3) }
+    | term0 { print_endline "term0"; $1 }
 ;
 
 term0:
-    | LPAREN term10 RPAREN { $2 }
-    | STRING { Types.TermString $1 }
-    | constant { Types.TermConstant $1 }
-    | VARIABLE { Types.TermVariable $1 }
-    | functor_name LPAREN arguments RPAREN { Types.TermFunctor ($1, $3) }
+    | LPAREN term10 RPAREN { print_endline "(term0)"; $2 }
+    | STRING { print_endline "string"; Types.TermString $1 }
+    | constant { print_endline "constant"; Types.TermConstant $1 }
+    | VARIABLE { print_endline "variable"; Types.TermVariable $1 }
+    | functor_name LPAREN arguments RPAREN { print_endline "functor(arguments)"; Types.TermFunctor ($1, $3) }
 ;
 
 arithmetic:
@@ -226,30 +232,30 @@ arithmetic2:
 ;
 
 functor_name:
-    | name { $1 } 
+    | name { print_endline "functor name"; $1 } 
 ;
 
 arguments:
-    | term10 COMMA arguments { ($1) :: ($3) }
-    | term10 { [$1] }
+    | term10 COMMA arguments { print_endline "term10, arguments"; ($1) :: ($3) }
+    | term10 { print_endline "term10"; [$1] }
 ;
 
 constant:
-    | atom { ConstantAtom $1 }
-    | number { ConstantNumber $1 }
+    | atom { print_endline "atom"; ConstantAtom $1 }
+    | number {print_endline "number"; ConstantNumber $1 }
 ;
 
 atom: 
-    | name { $1 }
+    | name { print_endline "atom name"; $1 }
 ;
 
 name:
-    | NAME { $1 }
+    | NAME { print_endline "name"; $1 }
 ;
 
 number:
-    | FLOATNUMBER { Types.Float $1 }
-    | INTEGERNUMBER { Types.Integer $1 }
+    | FLOATNUMBER {print_endline "float"; Types.Float $1 }
+    | INTEGERNUMBER { print_endline "int"; Types.Integer $1 }
 %%  
 
 
