@@ -1,6 +1,8 @@
 (* header section *)
 {
         open Parser;;
+
+        exception EOF;;         (* raised when parsing ends *)
 }
 
 (* definitions section *)
@@ -23,75 +25,83 @@ let variable = (capital | underline) alpha*              (* prolog variables *)
 
 let nstring = '"' [^ '"'] '"'                            (* prolog strings *)
 
-let sign = '+' | '-'                            (* signs *)
-let exp = ('e' | 'E') sign? digit+              (* optional exponent *)
-let simple_float = digit* '.' digit+            (* simplest float *)
-let simple_integer = digit+                     (* simplest integer *)
-let float_number = sign? simple_float exp?      (* valid prolog float *)
-let integer_number = sign? simple_integer exp?  (* valid prolog integer *)
+let sign = '+' | '-'                                     (* signs *)
+let exp = ('e' | 'E') sign? digit+                       (* optional exponent *)
+let simple_float = digit* '.' digit+                     (* simplest float *)
+let simple_integer = digit+                              (* simplest integer *)
+let float_number = sign? simple_float exp?               (* valid prolog float *)
+let integer_number = sign? simple_integer exp?           (* valid prolog integer *)
 
-let multiline_comment = "/*" ( [^'*'] [^'\\'] )* "*/"     (* multiline comment *)
-let single_line_comment = '%' [^'\n']* '\n'               (* single line comment *)
-let comment = multiline_comment | single_line_comment     (* valid prolog comments *)
-
-let whitespace = [' ' '\t' '\n']                (* whitespaces we allow in text *)
+let whitespace = [' ' '\t' '\n']
 
 rule token = parse
-        | comment               
-        {       
-                print_endline "/* */";
-                token lexbuf    
-        }
+        | eof
+        {       raise EOF       }
 
-        | whitespace            
+        | whitespace 
         {       token lexbuf    }
 
-        | "." 
-        {       DOT     }  
+        | '%' 
+        {       single_line_comment lexbuf    }
+
+        | "/*"
+        {       multiline_comment 0 lexbuf    }
+
+        | '.' 
+        { print_endline "got dot!"; DOT }  
         
         | float_number          
-        {
-                print_string "FLOAT: ";
-                print_endline (Lexing.lexeme lexbuf);  
-                FLOATNUMBER (float_of_string (Lexing.lexeme lexbuf)) 
-        } 
+        {       FLOATNUMBER (float_of_string (Lexing.lexeme lexbuf))    } 
 
         | integer_number        
-        { 
-                print_string "INT: ";
-                print_endline (Lexing.lexeme lexbuf); 
-                INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf)) 
-        }
+        {       INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf))    }
 
         | "is"  { IS }
         | "+"   { PLUS }
         | "-"   { MINUS }
         | "*"   { MULT }
-        | "/"   { DIV }
+        | "/"   { print_endline "div"; DIV }
         | '('   { LPAREN }
         | ')'   { RPAREN }
         | ":-"  { COLONHYPHEN }
 
         | name                  
-        {       
-                print_string "NAME: ";
-                print_endline (Lexing.lexeme lexbuf);
-                NAME (Lexing.lexeme lexbuf)     
-        }
+        {       NAME (Lexing.lexeme lexbuf)             }
         
         | nstring                
-        {       
-                print_string "STRING: ";
-                print_endline (Lexing.lexeme lexbuf);
-                STRING (Lexing.lexeme lexbuf)
-        }
+        {       STRING (Lexing.lexeme lexbuf)           }
         
         | variable              
-        {       
-                print_string "VAR: ";
-                print_endline (Lexing.lexeme lexbuf);
-                VARIABLE (Lexing.lexeme lexbuf) 
+        {       VARIABLE (Lexing.lexeme lexbuf)         }
+
+and single_line_comment = parse 
+        | "\n" 
+        {       token lexbuf    }
+       
+        | eof
+        {       raise EOF       }
+
+        |   _ 
+        {       single_line_comment lexbuf       }
+
+and multiline_comment level = parse
+        | "*/"
+        {       if level = 0 
+                    then token lexbuf
+                    else multiline_comment (level - 1) lexbuf    
         }
+       
+        | "/*"
+        {       multiline_comment (level + 1) lexbuf    }
+
+        | eof
+        {       failwith "Unclosed comment!";           }
+
+        |  _    
+        {       multiline_comment level lexbuf          }
+
+
+
 
 (* trailer section *)
 {

@@ -29,7 +29,8 @@ let read_database params =
         with 
             | Sys_error s -> print_endline ((Filename.basename filename)^ ": " ^ s)        (* case of system error *)
             | End_of_file -> ()                                                            (* shouldn't happen, but who knows *)
-            |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) 
+            | Lexer.EOF   -> ()                                                            (* lexer has nothing to lex left *)
+       (*     |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) *)
     in
 
     begin
@@ -58,13 +59,24 @@ let main () =
     	try 
 	   while (true) do					(* while not EOF *)
 	    	print_string ":- ";				(* print prompt *)
-		buff := Lexing.from_string(read_line());	(* read the expression *)
-		ignore (Parser.sentence_list Lexer.token !buff) (* create its syntax tree*)                    
+                flush stdout;
+
+                try
+		    buff := Lexing.from_string(read_line());	(* read the expression *)
+		    ignore (Parser.query Lexer.token !buff)     (* create it's syntax tree*)     
+                with
+                    | Lexer.EOF -> print_endline "L-EOF!"       (* lexer finished his job on this input *)       
+                     
+                    (*| Failure ("lexing: empty token")         (* lexing failure *)
+                    | Parsing.Parse_error ->                    (* parsing failure *)
+                                    print_endline "Parse error. Did you forget a
+                                    dot?"*)
+                    | Failure s -> print_endline ("Failed: " ^ s) 
            done
 	with
 	    | End_of_file -> (print_string "\n"; exit 0)
-            |   Failure s -> (print_endline s; exit 0)
-            |      _      -> (print_endline "Error occured."; exit 0)
+            (*|   Failure s -> (print_endline s; exit 0)*)
+           (* |      _      -> (print_endline "Error occured."; exit 0)*)
 ;;
 
 let _ = main ()  

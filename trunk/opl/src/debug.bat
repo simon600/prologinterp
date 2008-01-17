@@ -1,10 +1,13 @@
-rem Simple compilation script.
+rem Compilation with parser debugging information.
+rem Should be executed only in command line, as it sets environment variable.
 
 @echo off
+set OCAMLRUNPARAM='p'
+echo Creating debugging information...
 echo Compiling to destination ./opl.exe
 echo.
 ocamlc -c types.ml
-ocamlyacc parser.mly
+ocamlyacc -v parser.mly
 ocamlc -c parser.mli
 ocamlc -c parser.ml
 ocamllex lexer.mll
