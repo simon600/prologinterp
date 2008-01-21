@@ -3,60 +3,6 @@
 (* --- Header --- *)
 
         open Types;;
-
-        (* predefined operators list.  
-         * semantics at: 
-         * http://www.trinc-prolog.com/doc/pl_p50.htm
-         * http://www.amzi.com/manuals/amzi7/pro/ref_math.htm
-         *)       
-
-        let operators_table = Hashtbl.create 16;;
-        let _ = List.iter (fun (name, op) -> Hashtbl.add operators_table name op)
-                [ 
-                  (":-", Types.XFX (":-", 0));         (* implication (goal :- subgoals) *)
-                  (";",  Types.XFY (";", 1));           (* logical or *)
-                  ("->", Types.XFY ("->", 2));          (* if term1 then term2 *)
-                  (",",  Types.XFY (",", 3));           (* logical and *)
-                  ("not", Types.FY ("not", 4));         (* logical not *)
-                  ("=",  Types.XFX ("=", 5));           (* unify terms *)
-                  ("\\=", Types.XFX ("\\=", 5));        (* true, if terms are not unifiable *)
-                  ("is",  Types.XFX ("is", 5));         (* evaluate term2, evaluate term1, then unify *)
-                  ("=..",  Types.XFX ("=..", 5));       (* term composition/decomposition *)
-                  ("==",  Types.XFX ("==", 5));         (* test of term equality *)
-                  ("\\==",  Types.XFX ("\\==", 5));     (* test for term inequality *)
-                  ("=:=", Types.XFX ("=:=", 5));        (* arithmetical equality *)
-                  ("=\\=", Types.XFX ("=\\=", 5));      (* arithmetical inequality *)
-                  ("<", Types.XFX ("<", 5));            (* arithmetical less than *)
-                  (">", Types.XFX ("=<", 5));           (* arithmetical greater than *)
-                  (">=", Types.XFX (">=", 5));          (* arithmetical greater or equal to *)
-                  ("<=", Types.XFX ("<=", 5));          (* arithmetical less or equal to *)
-                  ("@=", Types.XFX ("@=", 5));          (* term1 equal term2 (order of terms) *)
-                  ("@<", Types.XFX ("@<", 5));          (* term1 less than term2 (order of terms) *)
-                  ("@>", Types.XFX ("@>", 5));          (* term1 greater than term2 (order of terms) *)
-                  ("@=<", Types.XFX ("@=<", 5));        (* term1 less or equal than term2 (order of terms) *)
-                  ("@>=", Types.XFX ("@>=", 5));        (* term1 greater or equal than term2 (order of terms) *)
-                  ("@\\=", Types.XFX("@!=", 5));        (* term inequality *)
-                  (":", Types.XFY (":", 6));            (* namespace operator. ex.: module_name:module_elem *)
-                  ("+", Types.YFX ("+", 7));            (* arithmetical addition *)
-                  ("-", Types.YFX ("-", 7));            (* arithmetical minus *)
-                  ("rem", Types.YFX ("rem", 8));        (* integer remainder *)
-                  ("mod", Types.YFX ("mod", 8));        (* integer modulo *)
-                  ("divs", Types.YFX ("divs", 8));      (* integer division, rounded answer *)
-                  ("mods", Types.YFX ("mods", 8));      (* remainder corresponding to divs *)
-                  ("divu", Types.YFX ("divu", 8));      (* integer division, truncated answer *)
-                  ("modu", Types.YFX ("modu", 8));      (* remainder corresponding to divu *)
-                  ("/", Types.YFX ("/", 8));            (* arithmetical division *)
-                  ("//", Types.YFX ("//", 8));          (* integer division *) 
-                  ("*", Types.YFX ("*", 8));            (* arithmetical multiplication *)
-                  (">>", Types.YFX (">>", 8));          (* bit shift to the right (division by 2) *)
-                  ("<<", Types.YFX ("<<", 8));          (* bit shift to the left (multiply by 2) *)
-                  ("**", Types.XFX ("**", 8));          (* power *)
-                  ("^", Types.XFY ("^", 8));            (* this-implementation-specific: is the variable instantiated *)
-                  ("/\\", Types.YFX ("/\\", 8));        (* bitwise and *)
-                  ("\\/", Types.YFX ("\\/", 8));        (* bitwise or *)
-                  ("\\"), Types.FX ("\\", 8);           (* bitwise negation *)
-                 ]
-        ;;
    
 %}
 
@@ -71,18 +17,38 @@
 %token DOT
 %token COLONHYPHEN
 %token ARROW 
-%token SEMICOLON COMMA
+%token NOT
+%token TERM_EQ TERM_INEQ IS TERM_DECOMP TERM_UNIFY TERM_NOTUNIFY
+       ARITH_EQ ARITH_INEQ ARITH_LESS ARITH_GREATER ARITH_GEQ
+       ARITH_LEQ TERM_ORDER_EQ TERM_ORDER_INEQ TERM_ORDER_GREATER
+       TERM_ORDER_LESS TERM_ORDER_GEQ TERM_ORDER_LEQ
+%token DOUBLECOLON
 %token PLUS MINUS
-%token MULT DIV
-%token IS
+%token MULT DIV INTDIV LEFT_SHIFT RIGHT_SHIFT 
+       REM MOD DIVS MODS DIVU MODU POWER BITWISE_AND
+       BITWISE_OR BITWISE_NOT VAR_INSTANTIATED
+%token SEMICOLON COMMA COLON
 %token LPAREN RPAREN 
 
 %left SEMICOLON COMMA
 %left PLUS MINUS
-%left MULT DIV
+%left MULT DIV INTDIV LEFT_SHIFT RIGHT_SHIFT
+%left BITWISE_AND BITWISE_OR BITWISE_NOT POWER
+%left TERM_EQ 
+%left TERM_UNIFY
+%left TERM_INEQ 
+%left TERM_NOTUNIFY
+%left ARITH_EQ ARITH_INEQ ARITH_LESS ARITH_GREATER
+      ARITH_LEQ ARITH_GEQ
+%left TERM_ORDER_EQ TERM_ORDER_INEQ TERM_ORDER_LESS TERM_ORDER_GREATER
+      TERM_ORDER_GEQ TERM_ORDER_LEQ
+%left IS 
+%left TERM_DECOMP
+%left DOUBLECOLON
 %right ARROW
-%nonassoc COLONHYPHEN
-%nonassoc DOT
+%right REM MOD DIVS MODS DIVU MODU
+%nonassoc COLONHYPHEN VAR_INSTANTIATED
+%nonassoc DOT COLON
 
 %type <Types.term list> sentence_list
 %start sentence_list
@@ -95,167 +61,386 @@
 %%
 
 sentence_list: 
-    | clause DOT sentence_list { print_endline "multiclause"; $1 :: $3 }
-    | clause DOT { print_endline "single_clause"; [$1] } 
+    | clause DOT sentence_list 
+    { 
+        print_endline "multiclause"; 
+        $1 :: $3 
+    }
+    | clause DOT 
+    { 
+        print_endline "single_clause"; 
+        [$1] 
+    } 
 ;
 
 query:
-    | clause DOT { print_endline "query clause"; $1 }
+    | clause DOT 
+    { 
+        print_endline "query clause"; 
+        $1 
+    }
 ;
 
 clause:
-    | head COLONHYPHEN body { print_endline "head :- body"; $1 }
-    | head { print_endline "head"; $1 }
+    | head COLONHYPHEN body 
+    { 
+        print_endline "head :- body"; 
+        $1 
+    }
+    | head
+    { 
+        print_endline "head";
+        $1 
+    }
 ;
 
 head:
-    | goal { print_endline "head goal"; $1 }
+    | goal
+    {
+        print_endline "head goal";
+        $1 
+    }
 ;
 
+/* we let only boolean operators appear in body part */
+
 body:
-    | goal ARROW body { print_endline "goal -> body"; $1 }
-    | goal SEMICOLON body { print_endline "goal ; body"; $1 }
-    | goal COMMA body { print_endline "goal , body"; $1 }
-    | goal { print_endline "body goal"; $1 }
+    | goal SEMICOLON body 
+    { 
+        print_endline "goal ; body";
+        $1 
+    }
+    | goal COMMA body 
+    { 
+        print_endline "goal , body";
+        $1 
+    }
+    | goal 
+    { 
+        print_endline "body goal"; 
+        $1 
+    }
 ;
 
 goal:
-    | term { print_endline "goal"; $1 }
+    | term
+    {
+        print_endline "goal"; 
+        $1 
+    }
 ;
 
 term:
-    | term10 { $1 }
+    | term0 { $1 }
 ;
 
-term10:
-    | term9 { $1 }
+term0:
+    | term1 { $1 }
 ;
 
-term9:
-    | term8 { $1 }
-;
-
-term8:
-    | term7 { $1 }
-;
-
-term7: 
-    | term6 { $1 }
-;
-
-term6:
-    | term5 { $1 }
-;
-
-term5:
-    | term4 { $1 }
-;
-
-term4:
-    | term3 { $1 }
-;
-
-term3: 
+term1:
     | term2 { $1 }
 ;
 
 term2:
-    | term1 { $1 }
-;
-
-/* the semantic action below should change according to the way assignment is solved */
-
-term1:
-    | VARIABLE IS arithmetic { print_endline "variable is"; ignore $1; Types.TermConstant (Types.ConstantNumber $3) }
-    | term0 { print_endline "term0"; $1 }
-;
-
-term0:
-    | LPAREN term10 RPAREN { print_endline "(term0)"; $2 }
-    | STRING { print_endline "string"; Types.TermString $1 }
-    | constant { print_endline "constant"; Types.TermConstant $1 }
-    | VARIABLE { print_endline "variable"; Types.TermVariable $1 }
-    | functor_name LPAREN arguments RPAREN { print_endline "functor(arguments)"; Types.TermFunctor ($1, $3) }
-;
-
-arithmetic:
-    | arithmetic0 { $1 }
-;
-
-arithmetic0:
-    | arithmetic1 PLUS arithmetic1 
+    | term2 ARROW term3 
     { 
-        match $1, $3 with 
-          | Types.Float f1, Types.Float f2 -> Types.Float (f1 +. f2)
-          | Types.Float f1, Types.Integer i2 -> Types.Float (f1 +. float_of_int i2)
-          | Types.Integer i1, Types.Float f2 -> Types.Float (float_of_int i1 +. f2)
-          | Types.Integer i1, Types.Integer i2 -> Types.Integer ( i1 + i2 )
+        print_endline "term2 -> term3"; 
+        Types.TermIfThen ($1, $3)  
+    } 
+    | term2 ARROW term3 COLON term3 
+    {
+        print_endline "term2 -> term3; term4"; 
+        Types.TermIfThenElse ($1, $3, $5)
     }
-
-    | arithmetic1 MINUS arithmetic1 
+    | term3 
     { 
-        match $1, $3 with 
-          | Types.Float f1, Types.Float f2 -> Types.Float (f1 -. f2)
-          | Types.Float f1, Types.Integer i2 -> Types.Float (f1 -. float_of_int i2)
-          | Types.Integer i1, Types.Float f2 -> Types.Float (float_of_int i1 -. f2)
-          | Types.Integer i1, Types.Integer i2 -> Types.Integer ( i1 - i2 )
+        $1 
     }
-
-    | arithmetic1 { $1 }
 ;
 
-arithmetic1:
-    | arithmetic2 MULT arithmetic1
+term3: 
+    | term4 
     { 
-        match $1, $3 with 
-          | Types.Float f1, Types.Float f2 -> Types.Float (f1 *. f2)
-          | Types.Float f1, Types.Integer i2 -> Types.Float (f1 *. float_of_int i2)
-          | Types.Integer i1, Types.Float f2 -> Types.Float (float_of_int i1 *. f2)
-          | Types.Integer i1, Types.Integer i2 -> Types.Integer ( i1 * i2 )
+        $1 
     }
-
-    | arithmetic2 DIV arithmetic1
-    { 
-        match $1, $3 with 
-          | Types.Float f1, Types.Float f2 -> Types.Float (f1 /. f2)
-          | Types.Float f1, Types.Integer i2 -> Types.Float (f1 /. float_of_int i2)
-          | Types.Integer i1, Types.Float f2 -> Types.Float (float_of_int i1 /. f2)
-          | Types.Integer i1, Types.Integer i2 -> Types.Integer ( i1 / i2 )
-    }
-
-    | arithmetic2 { $1 }
 ;
 
-arithmetic2:
-    | number { $1 }
-    | LPAREN arithmetic0 RPAREN { $2 } 
+term4:
+    | NOT term5 
+    { 
+        Types.TermNegation $2
+    }
+    | term5 
+    { 
+        $1 
+    }
+;
+
+term5:
+    | term5 ARITH_EQ term5
+    {
+        Types.TermArithmeticEquality ($1, $3)
+    }
+    | term5 ARITH_INEQ term5
+    {
+        Types.TermArithmeticInequality ($1, $3)
+    }
+    | term5 TERM_UNIFY term5
+    {
+        Types.TermTermUnify ($1, $3)
+    }
+    | term5 TERM_NOTUNIFY term5
+    {
+        Types.TermTermNotUnify ($1, $3)
+    }
+    | term5 TERM_EQ term5 
+    {
+        Types.TermTermEquality ($1, $3)
+    }
+    | term5 TERM_INEQ term5
+    {
+        Types.TermTermInequality ($1, $3)
+    }
+    | term5 IS term5 
+    {
+        Types.TermIs ($1, $3) 
+    }
+    | term5 TERM_DECOMP term5
+    {
+        Types.TermDecomposition ($1, $3)
+    } 
+    | term5 ARITH_GEQ term5 
+    {
+        Types.TermArithmeticGeq ($1, $3)
+    }
+    | term5 ARITH_LEQ term5 
+    {
+        Types.TermArithmeticLeq ($1, $3)
+    }
+    | term5 ARITH_LESS term5
+    {
+        Types.TermArithmeticLess ($1, $3)
+    }
+    | term5 ARITH_GREATER term5
+    {
+        Types.TermArithmeticGreater ($1, $3)
+    }
+    | term5 TERM_ORDER_EQ term5
+    {
+        Types.TermTermOrderEquality ($1, $3)
+    }
+    | term5 TERM_ORDER_INEQ term5
+    {
+        Types.TermTermOrderInequality ($1, $3)
+    }
+    | term5 TERM_ORDER_LESS term5
+    {
+        Types.TermTermOrderLess ($1, $3)
+    }
+    | term5 TERM_ORDER_GREATER term5
+    {
+        Types.TermTermOrderGreater ($1, $3)
+    }
+    | term5 TERM_ORDER_GEQ term5
+    { 
+        Types.TermTermOrderGeq ($1, $3)
+    }
+    | term5 TERM_ORDER_LEQ term5
+    {
+        Types.TermTermOrderLeq ($1, $3)
+    }
+    | term6 
+    { 
+        $1 
+    }
+;
+
+term6:
+    | term6 DOUBLECOLON term6 
+    {
+        Types.TermModule ($1, $3)
+    }
+    | term7 { $1 }
+;
+
+term7:
+    | term7 PLUS term7
+    {
+        Types.TermArithmeticPlus ($1, $3)
+    }
+    | term7 MINUS term7
+    {
+        Types.TermArithmeticMinus ($1, $3)
+    } 
+    | term8 { $1 }
+;
+
+term8:
+    | term8 REM term8
+    {
+        Types.TermArithmeticRemainder ($1, $3)
+    }
+    | term8 MOD term8
+    {
+        Types.TermArithmeticModulo ($1, $3)
+    }
+    | term8 DIVS term8
+    {
+        Types.TermArithmeticDivs ($1, $3)
+    }
+    | term8 MODS term8
+    {
+        Types.TermArithmeticMods ($1, $3)
+    }
+    | term8 DIVU term8
+    {
+        Types.TermArithmeticDivu ($1, $3)
+    }
+    | term8 MODU term8
+    {
+        Types.TermArithmeticModu ($1, $3)
+    }
+    | term8 DIV term8
+    {
+        Types.TermArithmeticDiv ($1, $3)
+    }
+    | term8 INTDIV term8
+    {
+        Types.TermArithmeticIntDiv ($1, $3)
+    }
+    | term8 MULT term8
+    {
+        Types.TermArithmeticMult ($1, $3)
+    }
+    | term8 RIGHT_SHIFT term8
+    {
+        Types.TermArithmeticRightShift ($1, $3)
+    }
+    | term8 LEFT_SHIFT term8
+    {
+        Types.TermArithmeticLeftShift ($1, $3)
+    }
+    | term8 POWER term8
+    {
+        Types.TermArithmeticPower ($1, $3)
+    }
+    | VAR_INSTANTIATED term8
+    {
+        Types.TermVariableInstantiated $2
+    }
+    | term8 BITWISE_AND term8
+    {
+        Types.TermBitwiseAnd ($1, $3)
+    }
+    | term8 BITWISE_OR term8
+    {
+        Types.TermBitwiseOr ($1, $3)
+    }
+    | term8 BITWISE_NOT term8
+    {
+        Types.TermBitwiseNot ($1, $3)
+    }
+    | term9 { $1 }
+;
+
+term9:
+    | term10 
+    {
+        print_endline "term10";
+        $1 
+    }
+;
+
+term10:
+    | LPAREN term0 RPAREN 
+    { 
+        print_endline "(term0)"; 
+        $2 
+    }
+    | STRING 
+    { 
+        print_endline "string"; 
+        Types.TermString $1 
+    }
+    | constant 
+    { 
+        print_endline "constant"; 
+        Types.TermConstant $1 
+    }
+    | VARIABLE 
+    { 
+        print_endline "variable"; 
+        Types.TermVariable $1 
+    }
+    | functor_name LPAREN arguments RPAREN 
+    { 
+        print_endline "functor(arguments)";
+        Types.TermFunctor ($1, $3) 
+    }
 ;
 
 functor_name:
-    | name { print_endline "functor name"; $1 } 
+    | name 
+    { 
+        print_endline "functor name"; 
+        $1
+    } 
 ;
 
 arguments:
-    | term10 COMMA arguments { print_endline "term10, arguments"; ($1) :: ($3) }
-    | term10 { print_endline "term10"; [$1] }
+    | term0 COMMA arguments 
+    { 
+        print_endline "term10, arguments"; 
+        ($1) :: ($3) 
+    }
+    | term0 
+    { 
+        print_endline "term10";
+        [$1] 
+    }
 ;
 
 constant:
-    | atom { print_endline "atom"; ConstantAtom $1 }
-    | number {print_endline "number"; ConstantNumber $1 }
+    | atom 
+    { 
+        print_endline "atom";
+        ConstantAtom $1 
+    }
+    | number 
+    {
+        print_endline "number"; 
+        ConstantNumber $1 
+    }
 ;
 
 atom: 
-    | name { print_endline "atom name"; $1 }
+    | name
+    { 
+        print_endline "atom name"; 
+        $1 
+    }
 ;
 
 name:
-    | NAME { print_endline "name"; $1 }
+    | NAME 
+    { 
+        print_endline "name";
+        $1 
+    }
 ;
 
 number:
-    | FLOATNUMBER {print_endline "float"; Types.Float $1 }
-    | INTEGERNUMBER { print_endline "int"; Types.Integer $1 }
+    | FLOATNUMBER
+    {
+        print_endline "float"; 
+        Types.Float $1 
+    }
+    | INTEGERNUMBER 
+    { 
+        print_endline "int"; 
+        Types.Integer $1 
+    }
 %%  
 
 

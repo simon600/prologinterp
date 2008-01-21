@@ -1,6 +1,7 @@
+@echo off
+
 rem Simple compilation script.
 
-@echo off
 echo Compiling to destination ./opl.exe
 echo.
 ocamlc -c types.ml
