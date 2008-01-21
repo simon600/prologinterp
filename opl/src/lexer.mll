@@ -56,14 +56,49 @@ rule token = parse
         | integer_number        
         {       INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf))    }
 
-        | "is"  { IS }
-        | "+"   { PLUS }
-        | "-"   { MINUS }
-        | "*"   { MULT }
-        | "/"   { print_endline "div"; DIV }
-        | '('   { LPAREN }
-        | ')'   { RPAREN }
-        | ":-"  { COLONHYPHEN }
+        | "rem"  { REM }
+        | "mod"  { MOD }
+        | "divs" { DIVS }
+        | "divu" { DIVU }
+        | "mods" { MODS }
+        | "modu" { MODU }
+        | "not"  { NOT }
+        | "=:="  { ARITH_EQ }
+        | "=\\=" { ARITH_INEQ }
+        | "->"   { ARROW }
+        | "\\="  { TERM_NOTUNIFY }
+        | "=.."  { TERM_DECOMP }
+        | "=="   { TERM_EQ }
+        | "@=<"  { TERM_ORDER_LEQ }
+        | "@>="  { TERM_ORDER_GEQ }
+        | "@="   { TERM_ORDER_EQ }
+        | "@\\=" { TERM_ORDER_INEQ }
+        | "@<"   { TERM_ORDER_LESS }
+        | "@>"   { TERM_ORDER_GREATER }
+        | "**"   { POWER }
+        | ">="   { ARITH_GEQ }
+        | "<="   { ARITH_LEQ }
+        | "//"   { INTDIV }
+        | "<<"   { LEFT_SHIFT }
+        | ">>"   { RIGHT_SHIFT } 
+        | "is"   { IS }
+        | "::"   { DOUBLECOLON }
+        | "\\/"  { BITWISE_AND }
+        | "/\\"  { BITWISE_OR }
+        | "\\"   { BITWISE_NOT }
+        | "^"    { VAR_INSTANTIATED }
+        | "+"    { PLUS }
+        | "-"    { MINUS }
+        | "*"    { MULT }
+        | "/"    { DIV }
+        | '('    { LPAREN }
+        | ')'    { RPAREN }
+        | ':'    { COLON }
+        | ';'    { SEMICOLON }
+        | '='    { TERM_UNIFY }
+        | '<'    { ARITH_LESS }
+        | '>'    { ARITH_GREATER }
+        | ":-"   { COLONHYPHEN }
 
         | name                  
         {       NAME (Lexing.lexeme lexbuf)             }
