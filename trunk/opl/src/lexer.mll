@@ -6,7 +6,7 @@
 
         (* predefined operators list.  
          * semantics at: 
-         * http://www.trinc-prolog.com/doc/pl_p50.htm
+         * http://www.trinc-prolog.com/doc/pl_pred.htm
          * http://www.amzi.com/manuals/amzi7/pro/ref_math.htm
          *)   
 
@@ -59,7 +59,10 @@
              (">",      ARITH_GREATER);         (* arithmetical greater than *)
              ("!",      CUT);                   (* cut operator *)
              (":-",     COLONHYPHEN);           (* logical implication *)
-             ("..",     DOUBLEDOT)]             (* database end *)
+             ("..",     DOUBLEDOT);             (* database end *)
+             ("[",      LBRACKET);              (* left bracket for lists *)
+             ("]",      RBRACKET);              (* right bracket for lists *)
+             ("|",      PIPE)]                  (* head-tail delimiter for lists *)
       ;;
         
 }
@@ -75,8 +78,8 @@ let alpha = capital | small | digit | underline          (* any alphanumeric cha
 
 let word = small alpha*                                  (* prolog words *)
 let quoted_name = '\'' [^ '\''] '\''                     (* quoted names *)
-let symbol = ['+' '-' '*' '/' '\\' '^' '<' '>' '=' '~' ':' '?' '@' '#' '$' '&' '.'] 
-let solo_char = ['!' ';']               
+let symbol = ['+' '-' '*' '/' '\\' '^' '<' '>' '=' '~' ':' '?' '@' '#' '$' '&'] 
+let solo_char = ['!' ';' '.' '[' ']' '(' ')' ',' '|']               
 
 let name = quoted_name | word | symbol+ | solo_char      (* valid prolog names *)
 
@@ -108,8 +111,7 @@ rule token = parse
 
         | name as id            
         {       
-                print_endline ("name"^id);
-                flush stdout;
+                print_endline ("NAME rule -> <" ^ id ^ ">");
 
                 try
                     Hashtbl.find keywords id
@@ -119,7 +121,7 @@ rule token = parse
 
         | float_number as fl         
         {       
-                print_endline (fl);
+                print_endline ("FLOAT rule -> <" ^ fl^ ">");
                 flush stdout;
                         
                 FLOATNUMBER (float_of_string (Lexing.lexeme lexbuf))    
@@ -127,15 +129,21 @@ rule token = parse
 
         | integer_number as inte       
         {       
-                print_endline inte;
+                print_endline ("INTEGER rule -> <" ^ inte^ ">");
                 flush stdout;
                 INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf))    } 
 
-        | nstring                
-        {       STRING (Lexing.lexeme lexbuf)           }
+        | nstring as str               
+        {
+                print_endline ("STRING rule -> <" ^ str^ ">");
+                STRING (Lexing.lexeme lexbuf)        
+        }
         
-        | variable              
-        {       VARIABLE (Lexing.lexeme lexbuf)         }
+        | variable as var               
+        {
+                print_endline ("VARIABLE rule -> <" ^ var^ ">");
+                VARIABLE (Lexing.lexeme lexbuf)
+        }
 
 and single_line_comment = parse 
         | "\n" 
