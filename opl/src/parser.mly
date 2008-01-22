@@ -358,26 +358,14 @@ term9:
 ;
 
 term10:
+    | list_term
+    {
+        $1
+    }
     | LPAREN term0 RPAREN 
     { 
         print_endline "(term0)"; 
         $2 
-    }
-    | LBRACKET RBRACKET 
-    {
-    
-        print_endline "[]";
-        Types.TermList []
-    }
-    | LBRACKET arguments RBRACKET
-    {
-        print_endline "[arguments]";
-        Types.TermList $2
-    }
-    | LBRACKET arguments PIPE arguments RBRACKET
-    {
-        print_endline "[ args | args ]";
-        Types.TermDividedList ($2, $4)
     }
     | STRING 
     { 
@@ -398,6 +386,25 @@ term10:
     { 
         print_endline "functor(arguments)";
         Types.TermFunctor ($1, $3) 
+    }
+;
+
+list_term:
+    | LBRACKET RBRACKET 
+    {
+    
+        print_endline "[]";
+        Types.TermList []
+    }
+    | LBRACKET arguments RBRACKET
+    {
+        print_endline "[arguments]";
+        Types.TermList $2
+    }
+    | LBRACKET arguments PIPE arguments RBRACKET
+    {
+        print_endline "[ args | args ]";
+        Types.TermDividedList ($2, $4)
     }
 ;
 
