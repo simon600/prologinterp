@@ -29,7 +29,7 @@
        BITWISE_OR BITWISE_NOT VAR_INSTANTIATED
 %token SEMICOLON COMMA COLON
 %token CUT
-%token LPAREN RPAREN 
+%token LPAREN RPAREN LBRACKET RBRACKET PIPE 
 
 %right SEMICOLON COMMA
 %left PLUS MINUS
@@ -48,7 +48,7 @@
 %left DOUBLECOLON
 %right ARROW
 %right REM MOD DIVS MODS DIVU MODU
-%nonassoc COLONHYPHEN VAR_INSTANTIATED
+%nonassoc COLONHYPHEN VAR_INSTANTIATED PIPE
 %nonassoc DOT DOUBLEDOT COLON CUT
 
 %type <Types.term list> sentence_list
@@ -363,6 +363,22 @@ term10:
         print_endline "(term0)"; 
         $2 
     }
+    | LBRACKET RBRACKET 
+    {
+    
+        print_endline "[]";
+        Types.TermList []
+    }
+    | LBRACKET arguments RBRACKET
+    {
+        print_endline "[arguments]";
+        Types.TermList $2
+    }
+    | LBRACKET arguments PIPE arguments RBRACKET
+    {
+        print_endline "[ args | args ]";
+        Types.TermDividedList ($2, $4)
+    }
     | STRING 
     { 
         print_endline "string"; 
@@ -396,18 +412,18 @@ functor_name:
 arguments:
     | term0 COMMA arguments 
     { 
-        print_endline "term10, arguments"; 
+        print_endline "term0, arguments"; 
         ($1) :: ($3) 
     }
     | term0 
     { 
-        print_endline "term10";
+        print_endline "term0";
         [$1] 
     }
 ;
 
 constant:
-    | atom 
+    | name 
     { 
         print_endline "atom";
         ConstantAtom $1 
@@ -416,14 +432,6 @@ constant:
     {
         print_endline "number"; 
         ConstantNumber $1 
-    }
-;
-
-atom: 
-    | name
-    { 
-        print_endline "atom name"; 
-        $1 
     }
 ;
 
