@@ -14,7 +14,7 @@
 %token <string> NAME
 %token <float> FLOATNUMBER 
 %token <int> INTEGERNUMBER
-%token DOT
+%token DOT DOUBLEDOT
 %token COLONHYPHEN
 %token ARROW 
 %token NOT
@@ -28,9 +28,10 @@
        REM MOD DIVS MODS DIVU MODU POWER BITWISE_AND
        BITWISE_OR BITWISE_NOT VAR_INSTANTIATED
 %token SEMICOLON COMMA COLON
+%token CUT
 %token LPAREN RPAREN 
 
-%left SEMICOLON COMMA
+%right SEMICOLON COMMA
 %left PLUS MINUS
 %left MULT DIV INTDIV LEFT_SHIFT RIGHT_SHIFT
 %left BITWISE_AND BITWISE_OR BITWISE_NOT POWER
@@ -48,7 +49,7 @@
 %right ARROW
 %right REM MOD DIVS MODS DIVU MODU
 %nonassoc COLONHYPHEN VAR_INSTANTIATED
-%nonassoc DOT COLON
+%nonassoc DOT DOUBLEDOT COLON CUT
 
 %type <Types.term list> sentence_list
 %start sentence_list
@@ -63,10 +64,10 @@
 sentence_list: 
     | clause DOT sentence_list 
     { 
-        print_endline "multiclause"; 
+        print_endline "multi_clause"; 
         $1 :: $3 
     }
-    | clause DOT 
+    | clause DOUBLEDOT 
     { 
         print_endline "single_clause"; 
         [$1] 
@@ -345,6 +346,10 @@ term8:
 ;
 
 term9:
+    | CUT 
+    { 
+            Types.TermCut 
+    }
     | term10 
     {
         print_endline "term10";
