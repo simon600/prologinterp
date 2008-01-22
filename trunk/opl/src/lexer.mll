@@ -85,7 +85,7 @@ let name = quoted_name | word | symbol+ | solo_char      (* valid prolog names *
 
 let variable = (capital | underline) alpha*              (* prolog variables *)
 
-let nstring = '"' [^ '"'] '"'                            (* prolog strings *)
+let nstring = '"' [^ '"']* '"'                           (* prolog strings *)
 
 let sign = '+' | '-'                                     (* signs *)
 let exp = ('e' | 'E') sign? digit+                       (* optional exponent *)
