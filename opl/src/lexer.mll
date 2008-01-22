@@ -3,6 +3,65 @@
         open Parser;;
 
         exception EOF;;         (* raised when parsing ends *)
+
+        (* predefined operators list.  
+         * semantics at: 
+         * http://www.trinc-prolog.com/doc/pl_p50.htm
+         * http://www.amzi.com/manuals/amzi7/pro/ref_math.htm
+         *)   
+
+        let keywords = Hashtbl.create 32;;
+   
+        let _ = List.iter (fun (kwd, tok) -> Hashtbl.add keywords kwd tok)
+            [(".",      DOT);                   
+             ("rem",    REM);
+             ("mod",    MOD);
+             ("divs",   DIVS);
+             ("divu",   DIVU);
+             ("mods",   MODS);
+             ("modu",   MODU);
+             ("not",    NOT);
+             ("=:=",    ARITH_EQ);
+             ("=\\=",   ARITH_INEQ);
+             ("->",     ARROW);
+             ("\\=",    TERM_NOTUNIFY);
+             ("=..",    TERM_DECOMP);
+             ("==",     TERM_EQ);
+             ("@=<",    TERM_ORDER_LEQ);
+             ("@>=",    TERM_ORDER_GEQ);
+             ("@=",     TERM_ORDER_EQ);
+             ("@\\=",   TERM_ORDER_INEQ);
+             ("@<",     TERM_ORDER_LESS);
+             ("@>",     TERM_ORDER_GREATER);
+             ("**",     POWER);
+             (">=",     ARITH_GEQ);
+             ("<=",     ARITH_LEQ);
+             ("//",     INTDIV);
+             ("<<",     LEFT_SHIFT);
+             (">>",     RIGHT_SHIFT);
+             ("is",     IS);
+             ("::",     DOUBLECOLON);
+             ("\\/",    BITWISE_AND);
+             ("/\\",    BITWISE_OR);
+             ("\\",     BITWISE_NOT);
+             ("^",      VAR_INSTANTIATED);
+             ("+",      PLUS);
+             ("-",      MINUS);
+             ("*",      MULT);
+             ("/",      DIV);
+             ("(",      LPAREN);
+             (")",      RPAREN);
+             (":",      COLON);
+             (",",      COMMA);
+             (";",      SEMICOLON);
+             ("=",      TERM_UNIFY);
+             ("<",      ARITH_LESS);
+             (">",      ARITH_GREATER);
+             ("!",      CUT);
+             (":-",     COLONHYPHEN);
+             ("..",     DOUBLEDOT)]
+      ;;
+        
 }
 
 (* definitions section *)
@@ -16,10 +75,10 @@ let alpha = capital | small | digit | underline          (* any alphanumeric cha
 
 let word = small alpha*                                  (* prolog words *)
 let quoted_name = '\'' [^ '\''] '\''                     (* quoted names *)
-let symbol = ['+' '-' '*' '/' '\\' '^' '<' '>' '=' '~' ':' '?' '@' '#' '$' '&'] 
+let symbol = ['+' '-' '*' '/' '\\' '^' '<' '>' '=' '~' ':' '?' '@' '#' '$' '&' '.'] 
 let solo_char = ['!' ';']               
 
-let name = quoted_name | word | symbol | solo_char       (* valid prolog names *)
+let name = quoted_name | word | symbol+ | solo_char      (* valid prolog names *)
 
 let variable = (capital | underline) alpha*              (* prolog variables *)
 
@@ -47,61 +106,19 @@ rule token = parse
         | "/*"
         {       multiline_comment 0 lexbuf    }
 
-        | '.' 
-        { print_endline "got dot!"; DOT }  
-        
         | float_number          
         {       FLOATNUMBER (float_of_string (Lexing.lexeme lexbuf))    } 
 
         | integer_number        
         {       INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf))    }
 
-        | "rem"  { REM }
-        | "mod"  { MOD }
-        | "divs" { DIVS }
-        | "divu" { DIVU }
-        | "mods" { MODS }
-        | "modu" { MODU }
-        | "not"  { NOT }
-        | "=:="  { ARITH_EQ }
-        | "=\\=" { ARITH_INEQ }
-        | "->"   { ARROW }
-        | "\\="  { TERM_NOTUNIFY }
-        | "=.."  { TERM_DECOMP }
-        | "=="   { TERM_EQ }
-        | "@=<"  { TERM_ORDER_LEQ }
-        | "@>="  { TERM_ORDER_GEQ }
-        | "@="   { TERM_ORDER_EQ }
-        | "@\\=" { TERM_ORDER_INEQ }
-        | "@<"   { TERM_ORDER_LESS }
-        | "@>"   { TERM_ORDER_GREATER }
-        | "**"   { POWER }
-        | ">="   { ARITH_GEQ }
-        | "<="   { ARITH_LEQ }
-        | "//"   { INTDIV }
-        | "<<"   { LEFT_SHIFT }
-        | ">>"   { RIGHT_SHIFT } 
-        | "is"   { IS }
-        | "::"   { DOUBLECOLON }
-        | "\\/"  { BITWISE_AND }
-        | "/\\"  { BITWISE_OR }
-        | "\\"   { BITWISE_NOT }
-        | "^"    { VAR_INSTANTIATED }
-        | "+"    { PLUS }
-        | "-"    { MINUS }
-        | "*"    { MULT }
-        | "/"    { DIV }
-        | '('    { LPAREN }
-        | ')'    { RPAREN }
-        | ':'    { COLON }
-        | ';'    { SEMICOLON }
-        | '='    { TERM_UNIFY }
-        | '<'    { ARITH_LESS }
-        | '>'    { ARITH_GREATER }
-        | ":-"   { COLONHYPHEN }
-
-        | name                  
-        {       NAME (Lexing.lexeme lexbuf)             }
+        | name as id            
+        {       
+                try
+                    Hashtbl.find keywords id
+                with
+                    | Not_found -> NAME (id) 
+        }
         
         | nstring                
         {       STRING (Lexing.lexeme lexbuf)           }
