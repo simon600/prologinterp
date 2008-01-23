@@ -1,0 +1,134 @@
+% Wersja October 18, 06:09:13 PM  
+\documentclass[11pt,leqno]{article}
+\usepackage[cp1250]{inputenc}  % Polskie literki...
+\usepackage{polski}            % Polskie tytu³y, data, bibliografia, itp.
+\usepackage{a4wide}            % Szersza strona...
+
+\usepackage{amsmath,amssymb}   % Do³¹czamy zestaw ró¿nych przydatnych znaczków...
+\usepackage{bbm}               % \mathbbm{N} - zbior liczb naturalnych
+\usepackage{amsthm}
+\usepackage{bnf}
+
+\usepackage[dvipdfm,colorlinks=true]{hyperref}          % aby móc umieszczaæ linki w PDFie
+
+\title{\LARGE \textbf{Interpreter jêzyka Prolog}\\
+                    zaimplementowany w jêzyku OCaml}
+\author{Karol Stosiek\thanks{\textit{E-mail}: \texttt{karol.stosiek@gmail.com}}%
+	\and Szymon Fogiel\thanks{\textit{E-mail}: \texttt{szymek.fogiel@gmail.com}}}
+\date{Wroc³aw, \today}
+
+
+
+\begin{document}
+\maketitle                % Utworzenie tytu³u.
+\thispagestyle{empty}     % Nie numerujemy pierwszej strony.
+\tableofcontents          % Spis treœci
+
+
+\section{Wstêp}
+\section{Sk³adnia}
+	\subsection{Sk³adnia bazy wiedzy}
+	\subsection{Sk³adnia zapytañ}
+\section{System wnioskowania}
+\section{Budowa interpretera}
+	\subsection{Podzia³ logiczny}
+	\subsection{Podzia³ fizyczny}
+\section{Dodatek A - operatory}
+\section{Dodatek B - gramatyka}
+	
+	\begin{grammar}
+		[(colon){$\rightarrow$}]
+		[(semicolon)$|$]
+		[(comma){}]
+		[(period){\\}]
+		[(quote){\begin{bf}}{\end{bf}}]
+		[(nonterminal){$\langle$}{$\rangle$}]
+		
+		<sentence list> : <clause> "." <sentence list> ; <clause> ".." .
+		
+		<query> : <clause> "." .
+
+		<clause> : <head> ":-" <body> ; <head> .
+		<head> : <goal> .
+		
+		<body> : <goal> ";" <body> ; <goal> "," <body> ; <goal> .
+		<goal> : <term>.
+		
+		<term>  : <term0> . 
+		
+		<term0> : <term1> . 
+		
+		<term1> : <term2> .
+		
+		<term2> : <term2> "$->$" <term3> ; <term2> "$->$" <term3> ":" <term3> ; <term3> .
+		
+		<term3> : <term4> .
+		
+		<term4> : "not" <term5> ; <term5> \\
+		
+		<term5> : <term5> "$=:=$" <term5>	\\
+				  ; <term5> "$==$" <term5> \\
+		    	; <term5> "$=$" <term5> \\
+		    	; <term5> "$\backslash$=" <term5> \\
+		    	; <term5> "$==$" <term5> \\
+		    	; <term5> "$\backslash$==" <term5>\\
+		    	; <term5> "is" <term5>\\
+		    	; <term5> "=.." <term5>\\
+		    	; <term5> "$>=$" <term5>\\
+		    	; <term5> "$<=$" <term5> \\
+		    	; <term5> "$<$" <term5>\\
+		    	; <term5> "$>$" <term5>\\
+		    	; <term5> "@=" <term5>\\
+		    	; <term5> "@$\backslash$=" <term5>\\
+		    	; <term5> "@$<$" <term5>\\
+		    	; <term5> "@$>$" <term5>\\
+		    	; <term5> "@$>=$" <term5>\\
+		    	; <term5> "@$=<$" <term5>\\
+		    	; <term6> \\
+		    	
+		<term6> : <term6> "::" <term6> ; <term7> .
+		
+		<term7> : <term7> "+" <term7> ; <term7> "-" <term7> ; <term8> .
+		
+		<term8> : <term8> "rem" <term8>\\
+		    	; <term8> "mod" <term8>\\
+		    	; <term8> "divs" <term8>\\
+		    	; <term8> "mods" <term8>\\
+		    	; <term8> "divu" <term8>\\
+		    	; <term8> "modu" <term8>\\
+		    	; <term8> "/" <term8>\\
+		    	; <term8> "//" <term8>\\
+		    	; <term8> "*" <term8>\\
+		    	; <term8> ">>" <term8>\\
+		   		; <term8> "<<" <term8>\\
+		   		; <term8> "**" <term8>\\
+		    	; "daszek" <term8>\\
+		    	; <term8> "$/\backslash$" <term8>\\
+		    	; <term8> "$\backslash/$" <term8>\\
+		    	; <term8> "$\backslash\backslash$" <term8>\\
+		    	; <term9> .
+		    	
+		<term9> : "!" ; <term10> . 
+		
+		<term10> : <term list> ; "(" <term0> ")" 
+					 ; <STRING> ; <VARIABLE> ; <constant> 
+		    	 ; <functor name> "(" <arguments> ")" .
+		    	 
+		<term list> : "[" "]" ; "[" <arguments> "]" ; "[" <arguments> "|" <arguments> "]" .
+		
+		<functor name> : <name> .
+		
+		<arguments> : <term0> "," <arguments> ; <term0> .
+		
+		<constant> : <name> ; <number> .
+		
+		<name> : <NAME> .
+		
+		<number> : <FLOATNUMBER> ; <INTEGERNUMBER> .
+
+\end{grammar}
+
+
+\section{Dodatek C - napotkane problemy}
+
+\end{document}
