@@ -114,8 +114,7 @@ body:
     | goal COMMA body 
     { 
         print_endline "goal , body";
-        Types.TermOr ($1, $3)
-        $1 
+        Types.TermOr ($1, $3) 
     }
     | goal 
     { 
