@@ -10,7 +10,9 @@ ocamlc -c parser.mli
 ocamlc -c parser.ml
 ocamllex lexer.mll
 ocamlc -c lexer.ml
-ocamlc -o ./opl.exe lexer.cmo parser.cmo opl.ml
+ocamlc -c unificator.ml
+ocamlc -c evaluator.ml
+ocamlc -o ./opl.exe lexer.cmo parser.cmo unificator.cmo evaluator.cmo opl.ml
 del *cmi 
 del *cmo
 del lexer.ml
