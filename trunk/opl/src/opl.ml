@@ -27,7 +27,7 @@ let read_database params =
             in begin
                     really_input source buffer 0 (file_length - 1);     (* reading from file, forcing to read everything into buffer *)
                     database :=                                         (* extending database with parsed input *) 
-                        (Parser.sentence_list Lexer.token (Lexing.from_string buffer)) @ !database
+                        (Parser.clause_list Lexer.token (Lexing.from_string buffer)) @ !database
                end
         with 
             | Sys_error s -> print_endline ((Filename.basename filename)^ ": " ^ s)        (* case of system error *)
