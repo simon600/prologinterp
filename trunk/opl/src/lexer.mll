@@ -13,8 +13,7 @@
         let keywords = Hashtbl.create 32;;
    
         let _ = List.iter (fun (kwd, tok) -> Hashtbl.add keywords kwd tok)
-            [(".",      DOT);                   (* sentence delimiter*)          
-             ("rem",    REM);                   (* division remainder *)
+            [("rem",    REM);                   (* division remainder *)
              ("mod",    MOD);                   (* modulo division *)
              ("divs",   DIVS);                  (* integer division, rounded answer *)
              ("divu",   DIVU);                  (* integer division, truncated answer *)
@@ -59,7 +58,6 @@
              (">",      ARITH_GREATER);         (* arithmetical greater than *)
              ("!",      CUT);                   (* cut operator *)
              (":-",     COLONHYPHEN);           (* logical implication *)
-             ("..",     DOUBLEDOT);             (* database end *)
              ("[",      LBRACKET);              (* left bracket for lists *)
              ("]",      RBRACKET);              (* right bracket for lists *)
              ("|",      PIPE)]                  (* head-tail delimiter for lists *)
@@ -102,6 +100,17 @@ rule token = parse
 
         | whitespace 
         {       token lexbuf    }
+
+        | ".."
+        {       
+                print_endline "doubledot";
+                DOUBLEDOT       
+        }
+
+        | "."   
+        {      
+                print_endline "dot";
+                DOT     }
 
         | '%' 
         {       single_line_comment lexbuf    }

@@ -24,16 +24,19 @@ let read_database params =
             let source      = open_in filename in           (* input channel *)
             let file_length = in_channel_length source in   (* total file length *)
             let buffer      = String.create file_length     (* buffer we read into *)
-            in begin
-                    really_input source buffer 0 (file_length - 1);     (* reading from file, forcing to read everything into buffer *)
+            in begin    
+                    really_input source buffer 0 (file_length - 2);     (* reading from file, forcing to read everything into buffer *)
                     database :=                                         (* extending database with parsed input *) 
-                        (Parser.clause_list Lexer.token (Lexing.from_string buffer)) @ !database
+                        (Parser.clause_list Lexer.token (Lexing.from_string
+                        buffer)) @ !database;
+                        print_endline "ok";
                end
         with 
             | Sys_error s -> print_endline ((Filename.basename filename)^ ": " ^ s)        (* case of system error *)
-            | End_of_file -> ()                                                            (* shouldn't happen, but who knows *)
+            | End_of_file -> print_endline ((Filename.basename filename)^ 
+                        ": could not read from file" )                                     (* shouldn't happen, but who knows *)
             | Lexer.EOF   -> ()                                                            (* lexer has nothing to lex left *)
-       (*     |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) *)
+     (*     |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) *)
     in
 
     begin
@@ -46,6 +49,7 @@ let read_database params =
                                         else print_endline                  (* warn user *)
                                                 ("File " ^ (Filename.basename filename) ^ " does not exist."))   
                         parameters;
+            print_int (List.length !database);
             !database                                           (* return created database *)
     end
 ;;
@@ -70,10 +74,9 @@ let main () =
                 with
                     | Lexer.EOF -> print_endline "L-EOF!"       (* lexer finished his job on this input *)       
                      
-                    (*| Failure ("lexing: empty token")         (* lexing failure *)
+                    | Failure ("lexing: empty token")           (* lexing failure *)
                     | Parsing.Parse_error ->                    (* parsing failure *)
-                                    print_endline "Parse error. Did you forget a
-                                    dot?"*)
+                                    print_endline "Parse error. Did you forget a dot?"
                     | Failure s -> print_endline ("Failed: " ^ s) 
            done
 	with
