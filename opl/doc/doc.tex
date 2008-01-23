@@ -22,110 +22,144 @@
 \begin{document}
 \maketitle                % Utworzenie tytu³u.
 \thispagestyle{empty}     % Nie numerujemy pierwszej strony.
-\tableofcontents          % Spis treœci
+\newpage
 
+\tableofcontents          % Spis treœci
+\newpage
 
 \section{Wstêp}
-\section{Sk³adnia}
-	\subsection{Sk³adnia bazy wiedzy}
-	\subsection{Sk³adnia zapytañ}
+\section{Ogólny zarys}
+	Napisany przez nas interpreter sk³adni¹ odpowiada ogólnie przyjêtej sk³adni Prologa; staraliœmy siê tak¿e zachowaæ
+	semantykê operatorów. W obecnej implementacji interpreter zawiera obs³ugê predykatów; nie mo¿na korzystaæ z dyrektyw
+	ani gramatyk bezkontekstowych. 
+
+	\subsection{£adowanie bazy wiedzy}
+	
+	Interpreter przyjmuje na wejœciu bazy wiedzy, wed³ug których bêdzie przeprowadza³ wnioskowanie.
+	Ka¿da baza wiedzy jest reprezentowana przez osobny plik, którego nazwa jest podawana jako argument 
+	wywo³ania interpretera. 
+	
+	Tym samym, uruchomienie intepretera z bazami zawartymi w plikach db1.opl, db2.opl, db3.opl bêdzie wygl¹da³o
+	nastêpuj¹co:
+	
+	\begin{center}
+		\begin{verbatim} opl.exe db1.opl db2.opl db3.opl \end{verbatim}
+	\end{center}
+
+	Interpreter wczytuje bazy wiedzy w kolejnoœci podanej przy wywo³aniu i do³¹cza listê predykatów zawartych 
+	w danej bazie do listy dotychczas wczytanych predykatów, tworz¹c tym samym jednolit¹ bazê wiedzy.
+	
+	\subsection{Formu³owanie zapytañ}
+	
+	Po wczytaniu baz wiedzy, interpreter przechodzi do trybu zapytañ. Szczegó³owa sk³adnia zapytañ znajduje siê
+	w dodatku B. \ref{Appendix:grammar}; symbolem startowym gramatyki w tym wypadku jest \textit{<query>}.		
+	
 \section{System wnioskowania}
 \section{Budowa interpretera}
 	\subsection{Podzia³ logiczny}
 	\subsection{Podzia³ fizyczny}
+	
 \section{Dodatek A - operatory}
-\section{Dodatek B - gramatyka}
+\section{Dodatek B - gramatyka}{\label{Appendix:grammar}}
 	
 	\begin{grammar}
 		[(colon){$\rightarrow$}]
 		[(semicolon)$|$]
 		[(comma){}]
 		[(period){\\}]
-		[(quote){\begin{bf}}{\end{bf}}]
+		[(quote){}{}]
 		[(nonterminal){$\langle$}{$\rangle$}]
 		
-		<sentence list> : <clause> "." <sentence list> ; <clause> ".." .
-		
-		<query> : <clause> "." .
-
-		<clause> : <head> ":-" <body> ; <head> .
-		<head> : <goal> .
-		
-		<body> : <goal> ";" <body> ; <goal> "," <body> ; <goal> .
+		<sentence list> : <clause> "\verb'.'" <sentence list> ; <clause> "\verb'..'" .		
+		<query> : <clause> "\verb'.'" .
+		<clause> : <head> "\verb':-'" <body> ; <head> .	
+		<head> : <goal> .		
+		<body> : <goal> "\verb';'" <body> ; <goal> "\verb','" <body> ; <goal> .		
 		<goal> : <term>.
 		
-		<term>  : <term0> . 
+		<term>  : <term0> . 		
+		<term0> : <term1> . 		
+		<term1> : <term2> .		
+		<term2> : <term2> "\verb'->'" <term3> ; <term2> "\verb'->'" <term3> "\verb':'" <term3> ; <term3> .		
+		<term3> : <term4> .	
+		<term4> : "\verb'not'" <term5> ; <term5> \\		
+		<term5> : <term5> "\verb'=:='" <term5>	\\
+				  ; <term5> "\verb'=='" <term5> \\
+		    	; <term5> "\verb'='" <term5> \\
+		    	; <term5> "\verb'\='" <term5> \\
+		    	; <term5> "\verb'=='" <term5> \\
+		    	; <term5> "\verb'\=='" <term5>\\
+		    	; <term5> "\verb'is'" <term5>\\
+		    	; <term5> "\verb'=..'" <term5>\\
+		    	; <term5> "\verb'>='" <term5>\\
+		    	; <term5> "\verb'<='" <term5> \\
+		    	; <term5> "\verb'<'" <term5>\\
+		    	; <term5> "\verb'>'" <term5>\\
+		    	; <term5> "\verb'@='" <term5>\\
+		    	; <term5> "\verb'@\='" <term5>\\
+		    	; <term5> "\verb'@<'" <term5>\\
+		    	; <term5> "\verb'@>'" <term5>\\
+		    	; <term5> "\verb'@>='" <term5>\\
+		    	; <term5> "\verb'@=<'" <term5>\\
+		    	; <term6> .		    	
+		<term6> : <term6> "\verb'::'" <term6> ; <term7> .	
+		<term7> : <term7> "\verb'+'" <term7> ; <term7> "\verb'-'" <term7> ; <term8> .	
+		<term8> : <term8> "\verb'rem'" <term8>\\
+		    	; <term8> "\verb'mod'" <term8>\\
+		    	; <term8> "\verb'divs'" <term8>\\
+		    	; <term8> "\verb'mods'" <term8>\\
+		    	; <term8> "\verb'divu'" <term8>\\
+		    	; <term8> "\verb'modu'" <term8>\\
+		    	; <term8> "\verb'/'" <term8>\\
+		    	; <term8> "\verb'//'" <term8>\\
+		    	; <term8> "\verb'*'" <term8>\\
+		    	; <term8> "\verb'>>'" <term8>\\
+		   		; <term8> "\verb'<<'" <term8>\\
+		   		; <term8> "\verb'**'" <term8>\\
+		    	; "\verb'^'" <term8>\\
+		    	; <term8> "\verb'/\'" <term8>\\
+		    	; <term8> "\verb'\/'" <term8>\\
+		    	; <term8> "\verb'\\'" <term8>\\
+		    	; <term9> .	    	
+		<term9> : "\verb'!'" ; <term10> . 		
+		<term10> : <term list> ; "\verb'('" <term0> "\verb')'" 
+					 ; <string> ; <variable> ; <constant> \\
+		    	 ; <functor name> "\verb'('" <arguments> "\verb')'" .	    	 
 		
-		<term0> : <term1> . 
+		<term list> : "\verb'['" "\verb']'" ; "\verb'['" <arguments> "\verb']'" ; "\verb'['" <arguments> "\verb'|'" <arguments> "\verb']'" .
+		<functor name> : <name> .	
+		<arguments> : <term0> "\verb','" <arguments> ; <term0> .		
+		<constant> : <name> ; <number> .	
+		<name> : <name> .		
+		<number> : <float number> ; <integer number> .
 		
-		<term1> : <term2> .
+		<capital> : "$[\verb'A'-\verb'Z']$" .
+		<small> : "$[\verb'a'-\verb'z']$"  .       
+		<digit> : "$[\verb'0'-\verb'9']$"   .      
+		<underline> : "\verb'_'" .    
+		<alpha> : <capital> ; <small> ; <digit> ; <underline> .       
+		<word> : <small> <alpha>"$*$".                         
+		<quoted name> : "\verb"'"" ; 
+		"$[\verb'^' \verb"'" ]+ $" ; 
+		"\verb"'"" .            
+		<symbol> : "\verb'+'" ; "\verb'-'" ; "\verb'*'" ; "\verb'/'"  
+			 				 "\verb'\'" ; "\verb'^'" ; "\verb'<'" ; "\verb'>'" 
+							 "\verb'='" ; "\verb'~'" ; "\verb':'" ;	"\verb'?'" 		
+							 "\verb'@'" ; "\verb'#'" ; "\verb'$'" ;	"\verb'&'" .		
+		<solo char> : "\verb'!': ; "$\verb';'$" ; "$\verb'.'$" ; "\verb'['" ; 
+									"\verb']'" ; "\verb'('" ; "\verb')'" ; "\verb','" ; "\verb'|'.              
 		
-		<term2> : <term2> "$->$" <term3> ; <term2> "$->$" <term3> ":" <term3> ; <term3> .
+		<name> : <quoted name> ; <word> ; <symbol>"$+$" ; <solo char>.   
+		<variable> : "$($" <capital> ; <underline> "$)$" <alpha> "$*$" .           
+	  <string> :  <any printable character in double qoutes> .                  
 		
-		<term3> : <term4> .
-		
-		<term4> : "not" <term5> ; <term5> \\
-		
-		<term5> : <term5> "$=:=$" <term5>	\\
-				  ; <term5> "$==$" <term5> \\
-		    	; <term5> "$=$" <term5> \\
-		    	; <term5> "$\backslash$=" <term5> \\
-		    	; <term5> "$==$" <term5> \\
-		    	; <term5> "$\backslash$==" <term5>\\
-		    	; <term5> "is" <term5>\\
-		    	; <term5> "=.." <term5>\\
-		    	; <term5> "$>=$" <term5>\\
-		    	; <term5> "$<=$" <term5> \\
-		    	; <term5> "$<$" <term5>\\
-		    	; <term5> "$>$" <term5>\\
-		    	; <term5> "@=" <term5>\\
-		    	; <term5> "@$\backslash$=" <term5>\\
-		    	; <term5> "@$<$" <term5>\\
-		    	; <term5> "@$>$" <term5>\\
-		    	; <term5> "@$>=$" <term5>\\
-		    	; <term5> "@$=<$" <term5>\\
-		    	; <term6> \\
-		    	
-		<term6> : <term6> "::" <term6> ; <term7> .
-		
-		<term7> : <term7> "+" <term7> ; <term7> "-" <term7> ; <term8> .
-		
-		<term8> : <term8> "rem" <term8>\\
-		    	; <term8> "mod" <term8>\\
-		    	; <term8> "divs" <term8>\\
-		    	; <term8> "mods" <term8>\\
-		    	; <term8> "divu" <term8>\\
-		    	; <term8> "modu" <term8>\\
-		    	; <term8> "/" <term8>\\
-		    	; <term8> "//" <term8>\\
-		    	; <term8> "*" <term8>\\
-		    	; <term8> ">>" <term8>\\
-		   		; <term8> "<<" <term8>\\
-		   		; <term8> "**" <term8>\\
-		    	; "daszek" <term8>\\
-		    	; <term8> "$/\backslash$" <term8>\\
-		    	; <term8> "$\backslash/$" <term8>\\
-		    	; <term8> "$\backslash\backslash$" <term8>\\
-		    	; <term9> .
-		    	
-		<term9> : "!" ; <term10> . 
-		
-		<term10> : <term list> ; "(" <term0> ")" 
-					 ; <STRING> ; <VARIABLE> ; <constant> 
-		    	 ; <functor name> "(" <arguments> ")" .
-		    	 
-		<term list> : "[" "]" ; "[" <arguments> "]" ; "[" <arguments> "|" <arguments> "]" .
-		
-		<functor name> : <name> .
-		
-		<arguments> : <term0> "," <arguments> ; <term0> .
-		
-		<constant> : <name> ; <number> .
-		
-		<name> : <NAME> .
-		
-		<number> : <FLOATNUMBER> ; <INTEGERNUMBER> .
-
+		<sign> : "\verb'+'" ; "\verb'-'"  .                                 
+		<exp> : "$(\verb'e'$" ; "\verb'E'$)$" <sign>"\verb'?'" digit"\verb'+'" .                 
+		<simple float> : <digit>"$*$ \verb'.'" <digit>"$+$"  .                 
+		<simple integer> : <digit>"$+$" .                      
+		<float number> : <sign>"$?$" <simple float> <exp>"$?$"   .            
+		<integer number> : <sign>"$?$" <simple integer> <exp>"$?$"  .  
+		 
 \end{grammar}
 
 
