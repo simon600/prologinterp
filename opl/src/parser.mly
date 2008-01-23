@@ -51,8 +51,8 @@
 %nonassoc COLONHYPHEN VAR_INSTANTIATED PIPE
 %nonassoc DOT DOUBLEDOT COLON CUT
 
-%type <Types.term list> sentence_list
-%start sentence_list
+%type <Types.clause list> clause_list
+%start clause_list
 
 %type <Types.term> query
 %start query
@@ -61,8 +61,8 @@
 
 %%
 
-sentence_list: 
-    | clause DOT sentence_list 
+clause_list: 
+    | clause DOT clause_list 
     { 
         print_endline "multi_clause"; 
         $1 :: $3 
@@ -75,9 +75,9 @@ sentence_list:
 ;
 
 query:
-    | clause DOT 
+    | goal DOT 
     { 
-        print_endline "query clause"; 
+        print_endline "query "; 
         $1 
     }
 ;
@@ -86,12 +86,12 @@ clause:
     | head COLONHYPHEN body 
     { 
         print_endline "head :- body"; 
-        $1 
+        Types.ClauseImplication ($1, $3)
     }
     | head
     { 
         print_endline "head";
-        $1 
+        Types.SingleClause $1 
     }
 ;
 

@@ -1,7 +1,13 @@
 
 (* --- Prolog syntax elements constructors --- *)
 
-type term =                                     (* prolog term types *)
+type clause =                                   (* database clauses *)
+  | ClauseImplication of term * term            (* implication clause *)
+  | SingleClause of term                        (* fact clause *)
+
+and term =                                      (* prolog term types *)
+  | TermOr of term * term                       (* logical disjunction *)
+  | TermAnd of term * term                      (* logical conjuction *)
   | TermString of string                        (* prolog string term *)
   | TermConstant of constant                    (* prolog constant term *)
   | TermVariable of name                        (* prolog variable terms *)
