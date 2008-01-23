@@ -1,5 +1,8 @@
 open Parser;;
 open Lexer;;
+open Types;;
+open Unificator;;
+open Evaluator;;
 
 (* 
  * reading database from input files.
@@ -63,7 +66,7 @@ let main () =
 
                 try
 		    buff := Lexing.from_string(read_line());	(* read the expression *)
-		    ignore (Parser.query Lexer.token !buff)     (* create it's syntax tree*)     
+		    evaluate (Parser.query Lexer.token !buff);    (* create it's syntax tree*)		    
                 with
                     | Lexer.EOF -> print_endline "L-EOF!"       (* lexer finished his job on this input *)       
                      
