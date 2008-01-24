@@ -109,12 +109,12 @@ body:
     | goal SEMICOLON body 
     { 
         print_endline "goal ; body";
-        Types.TermAnd ($1, $3)
+        Types.TermOr ($1, $3)
     }
     | goal COMMA body 
     { 
         print_endline "goal , body";
-        Types.TermOr ($1, $3) 
+        Types.TermAnd ($1, $3) 
     }
     | goal 
     { 
