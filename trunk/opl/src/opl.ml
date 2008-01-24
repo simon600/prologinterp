@@ -70,7 +70,7 @@ let main () =
 
                 try
 		    buff := Lexing.from_string(read_line());	(* read the expression *)
-		    print_evaluation (evaluate (Parser.query Lexer.token !buff));    (* create it's syntax tree*)		    
+		    interpret (Parser.query Lexer.token !buff) database;    (* create it's syntax tree*)		    
                 with
                     | Lexer.EOF -> print_endline "L-EOF!"       (* lexer finished his job on this input *)       
                      
