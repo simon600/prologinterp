@@ -396,17 +396,22 @@ list_term:
         print_endline "[]";
         Types.TermList []
     }
-    | LBRACKET arguments RBRACKET
+    | LBRACKET list_body RBRACKET
     {
         print_endline "[arguments]";
         Types.TermList $2
     }
-    | LBRACKET arguments PIPE arguments RBRACKET
-    {
-        print_endline "[ args | args ]";
-        Types.TermDividedList ($2, $4)
-    }
 ;
+
+list_body:
+    | arguments
+    {
+        $1
+    }
+    | arguments PIPE arguments
+    {
+        $1 @ $3
+    }
 
 functor_name:
     | name 
