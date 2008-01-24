@@ -13,7 +13,6 @@ and term =                                      (* prolog term types *)
   | TermVariable of name                        (* prolog variable terms *)
   | TermFunctor of name * arguments             (* functor term *)
   | TermList of term list                       (* prolog lists *)
-  | TermDividedList of term list * term list    (* prolog lists with pipe *)
 
   | TermIfThen of term * term                   (* if then *)
   | TermIfThenElse of term * term * term        (* if then else *)
