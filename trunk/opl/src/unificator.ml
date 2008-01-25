@@ -60,9 +60,26 @@ let rec replace_var term var rep_term =
 
 (* appends a replacement to a term *)
 let rec replace term replacement = 
-  match replacement with
-      [] -> term
-    | (v,rep)::trep -> replace (replace_var term v rep) trep
+  let rep term' =
+      replace term' replacement
+  in
+  match term with
+      TermOr(t1,t2) -> TermOr(replace t1 replacement, replace t2 replacement)
+    | TermAnd(t1,t2) -> TermAnd(replace t1 replacement, replace t2 replacement)
+    | TermVariable var ->
+	 (match replacement with
+	     [] -> term
+	   | (v,rep)::replacement' -> 
+	       if v = var then rep
+	       else replace term replacement')
+    | TermFunctor(nam,args) -> TermFunctor(nam,List.map rep args)
+    | TermIs(t1,t2) -> TermIs(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticPlus(t1,t2) -> TermArithmeticPlus(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticMinus(t1,t2) -> TermArithmeticPlus(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticMult(t1,t2) -> TermArithmeticMinus(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticDiv(t1,t2) -> TermArithmeticMult(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticEquality(t1,t2) -> TermArithmeticEquality(replace t1 replacement, replace t2 replacement)
+    | _ -> term
 
 
 (* adds new variable replacement to given replacement *)
