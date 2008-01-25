@@ -4,6 +4,7 @@ open Unificator;;
 exception Not_a_number;;
 exception Cant_evaluate;;
 exception No_more_conts;;
+exception Not_integer;;
 
 let c = ref 0
 
@@ -31,7 +32,17 @@ let rec get_variables term list =
       | TermArithmeticMinus(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticMult(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticDiv(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticIntDiv(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticEquality(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticInequality(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticLess(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticGreater(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticLeq(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticGeq(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermTermUnify(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermTermNotUnify(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermNegation t -> get_variables t list
+      | TermTermEquality(t1,t2) -> get_variables t2 (get_variables t1 list)	  
       | _ -> list
 
 (* evaluates arithmetic expression *)
@@ -80,6 +91,14 @@ let rec arithmetic_eval term =
 	  | Integer i1 -> (match n2 with
 			       Float fl2 -> Float ((float_of_int i1) /. fl2)
 			     | Integer i2 -> Integer (i1 / i2)))
+    | TermArithmeticIntDiv(t1,t2) -> let n1 = (arithmetic_eval t1) 
+				   and n2 = (arithmetic_eval t2)
+      in
+	(match n1 with
+	    Float fl1 -> raise Not_integer
+	  | Integer i1 -> (match n2 with
+			       Float fl2 -> raise Not_integer
+			     | Integer i2 -> Integer (i1 / i2)))
     | _ -> raise Not_a_number
       
 
@@ -120,15 +139,70 @@ and evaluate term database rep clauses cont =
   let repterm = replace term rep             (* apply replacement to the term *)
   in
   match repterm with
-      TermTermUnify(term1,term2) -> let uni = (unify term1 term2 rep)
-      in
-	if fst uni then cont uni
-	else cont (false,[])
+      TermTermUnify(term1,term2) -> cont (unify term1 term2 rep)
+    | TermTermNotUnify(term1,term2) -> 
+	let uni = unify term1 term2 rep in
+	  cont (not (fst uni), snd uni)
     | TermArithmeticEquality(t1,t2) -> let n1 = arithmetic_eval t1
 				       and n2 = arithmetic_eval t2
       in
 	if n1 = n2 then cont (true,rep)
       else cont (false,[])
+    | TermArithmeticInequality(t1,t2) -> let n1 = arithmetic_eval t1
+				       and n2 = arithmetic_eval t2
+      in
+	if n1 = n2 then cont (false,[])
+      else cont (true,rep)
+    | TermArithmeticLess(t1,t2) -> let n1 = arithmetic_eval t1
+				   and n2 = arithmetic_eval t2
+      in
+	(match n1 with
+	    Float x1 ->
+	      (match n2 with
+		   Float x2 -> (x1 < x2,rep)
+		 | Integer i2 -> (x1 < float_of_int i2,rep))
+	  | Integer i1 ->
+	      (match n2 with
+		   Float x2 -> (float_of_int i1 < x2,rep)
+		 | Integer i2 -> (i1 < i2,rep)))
+    | TermArithmeticGreater(t1,t2) -> let n1 = arithmetic_eval t1
+				      and n2 = arithmetic_eval t2
+      in
+	(match n1 with
+	    Float x1 ->
+	      (match n2 with
+		   Float x2 -> (x1 > x2,rep)
+		 | Integer i2 -> (x1 > float_of_int i2,rep))
+	  | Integer i1 ->
+	      (match n2 with
+		   Float x2 -> (float_of_int i1 > x2,rep)
+		 | Integer i2 -> (i1 > i2,rep)))
+    | TermArithmeticLeq(t1,t2) -> let n1 = arithmetic_eval t1
+				  and n2 = arithmetic_eval t2
+      in
+	(match n1 with
+	    Float x1 ->
+	      (match n2 with
+		   Float x2 -> (x1 <= x2,rep)
+		 | Integer i2 -> (x1 <= float_of_int i2,rep))
+	  | Integer i1 ->
+	      (match n2 with
+		   Float x2 -> (float_of_int i1 <= x2,rep)
+		 | Integer i2 -> (i1 <= i2,rep)))
+    | TermArithmeticGeq(t1,t2) -> let n1 = arithmetic_eval t1
+				  and n2 = arithmetic_eval t2
+      in
+	(match n1 with
+	    Float x1 ->
+	      (match n2 with
+		   Float x2 -> (x1 >= x2,rep)
+		 | Integer i2 -> (x1 >= float_of_int i2,rep))
+	  | Integer i1 ->
+	      (match n2 with
+		   Float x2 -> (float_of_int i1 >= x2,rep)
+		 | Integer i2 -> (i1 >= i2,rep)))
+    | TermNegation t -> evaluate t database rep clauses (fun vt -> cont (not (fst vt), snd vt))
+    | TermTermEquality(t1,t2) -> cont (t1 = t2,rep)
     | TermIs(t1,t2) -> let n2 = TermConstant (ConstantNumber (arithmetic_eval t2))
       in
 	cont (unify t1 n2 [])
