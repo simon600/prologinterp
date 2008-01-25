@@ -12,6 +12,7 @@ open Evaluator;;
 let read_database params = 
 
     let database = ref []           (* database we create *)
+    and clause_list = ref[]         (* clauses we read *)
     in          
 
     (* 
@@ -25,10 +26,10 @@ let read_database params =
             let file_length = in_channel_length source in   (* total file length *)
             let buffer      = String.create file_length     (* buffer we read into *)
             in begin    
-                    really_input source buffer 0 (file_length - 2);     (* reading from file, forcing to read everything into buffer *)
-                    database :=                                         (* extending database with parsed input *) 
-                        (Parser.clause_list Lexer.token (Lexing.from_string
-                        buffer)) @ !database;
+                    really_input source buffer 0 (file_length - 2);     (* reading from file, forcing to read everything into buffer *)		                    
+                        clause_list := (Parser.clause_list Lexer.token (Lexing.from_string
+                        buffer));		        
+			database := (List.map make_unique !clause_list) @ !database;
                         print_endline "ok";
                end
         with 
