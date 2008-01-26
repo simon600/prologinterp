@@ -5,6 +5,7 @@ exception Not_a_number;;
 exception Cant_evaluate;;
 exception No_more_conts;;
 exception Not_integer;;
+exception Cut of (bool * (name * term) list);;
 
 let c = ref 0 (* used by get_unique_var *)
 
@@ -135,10 +136,14 @@ let rec functor_eval functor_term database rep clauses cont =
 				     else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
 				 | ClauseImplication(dterm,condition) -> let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
 				   in
-				     (add_cont (fun () -> functor_eval term database rep clauses' cont); (* add possible continuation of calculations to conts *)
 				      if fst uni then
-					evaluate condition database (snd uni) database (fun vt -> cont vt) (* if term unifies with left side of implication then try to evaluate it's condition *)
-				      else cont (false,[])))
+					try
+					  (* if term unifies with left side of implication then try to evaluate it's condition *)
+					  evaluate condition database (snd uni) database 
+					    (fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt)) 
+					with
+					    Cut ret_value -> cont ret_value (* handle cut operator *)
+				      else functor_eval term database rep clauses' cont)
 (* evaluates terms *)
 and evaluate term database rep clauses cont =
   let repterm = replace term rep             (* apply replacement to the term *)
@@ -220,6 +225,7 @@ and evaluate term database rep clauses cont =
 	     else cont (false,[]))
     | TermOr(t1,t2) -> (add_cont (fun () -> evaluate t2 database rep clauses cont); (* add another evaluation possibility to conts *)
 			evaluate t1 database rep clauses (fun vt -> cont vt)) (* evaluate first term *)
+    | TermCut -> raise (Cut (true,rep))
     | _ -> raise Cant_evaluate
 
 (* evaluates all possible ways a term given a specific database *)
