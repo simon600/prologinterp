@@ -247,8 +247,7 @@ let rec unify term1 term2 rep =
 	       | TermNegation t2 -> (match rterm1 with
 						    TermNegation t1 -> unify t1 t2 rep
 						  | _ -> (false,[]))
-	       | TermFunctor(nam2,args2) -> 
-		   
+	       | TermFunctor(nam2,args2) -> 		   
 		     (match rterm1 with
 			  TermFunctor(nam1,args1) ->
 			    if nam1 = nam2 && (List.length args1) = (List.length args2) then
@@ -257,9 +256,14 @@ let rec unify term1 term2 rep =
 			| _ -> (false,[]))
 	       | TermList (EmptyList) -> (match rterm1 with
 					      TermList (EmptyList) -> (true,rep)
+					    | TermList (NormalList []) -> (true,rep)
 					    | _ ->  (false,[]))
 	       | TermList (NormalList args2) -> (match rterm1 with
-						     TermList (NormalList args1) ->
+						     TermList (EmptyList) ->
+						       if (List.length args2) = 0 then
+							 (true,rep)
+						       else (false,[])
+						   | TermList (NormalList args1) ->
 						       if (List.length args2) = (List.length args1) then
 							 unify_args args1 args2 rep
 						       else (false,[])

@@ -163,7 +163,7 @@ let rec functor_eval functor_term database rep clauses cont =
 	       in
 		 if fst uni then
 		   try
-		      (* if term unifies with left side of implication then try to evaluate it's condition *)
+		      (* if term unifies with left side of implication then try to evaluate it's condition *)		     
 		      evaluate condition database (snd uni) database 
 			(fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt))
 		   with
