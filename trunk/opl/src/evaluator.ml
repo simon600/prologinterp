@@ -15,18 +15,18 @@ let get_unique_var() =
 
 (* gets list of variables in term *)
 let rec get_variables term list =
+  let rec get_vars_from_args args list = (* gets variables from arguments *)
+    match args with
+	[] -> list
+      | t::terms -> get_vars_from_args terms (get_variables t list)
+  in
     match term with
 	TermOr(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermAnd(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermVariable v -> if List.exists (fun var -> var = v) list then list else v::list
       | TermString str -> list
       | TermConstant const -> list
-      | TermFunctor(nam,args) -> 
-	  let rec get_vars_from_args args list = (* gets variables from arguments *)
-	    match args with
-		[] -> list
-	      | t::terms -> get_vars_from_args terms (get_variables t list)
-	  in
+      | TermFunctor(nam,args) -> 	  
 	    get_vars_from_args args list
       | TermIs(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticPlus(t1,t2) -> get_variables t2 (get_variables t1 list)
@@ -43,8 +43,31 @@ let rec get_variables term list =
       | TermTermUnify(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermTermNotUnify(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermNegation t -> get_variables t list
-      | TermTermEquality(t1,t2) -> get_variables t2 (get_variables t1 list)	  
+      | TermTermEquality(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermList listterm ->
+	  (match listterm with
+	       EmptyList -> list
+	     | NormalList args -> get_vars_from_args args list
+	     | DividedList (args,term) -> get_variables term (get_vars_from_args args list))
       | _ -> list
+
+
+(* makes variables in clause unique *)
+let make_unique clause =
+  let var_list = ref []
+  and replacement = ref []
+  in 
+  (match clause with
+       SingleClause term -> var_list := get_variables term []
+     | ClauseImplication (term1,term2) ->	
+	var_list := get_variables term2 (get_variables term1 []));
+  replacement := List.map (fun var -> (var, TermVariable (get_unique_var()))) !var_list;
+  (match clause with
+      SingleClause term -> SingleClause (replace term !replacement)
+    | ClauseImplication (term1,term2) ->
+	ClauseImplication (replace term1 !replacement, replace term2 !replacement))
+
+
 
 (* evaluates arithmetic expression *)
 let rec arithmetic_eval term = 
@@ -125,26 +148,28 @@ rep is a replacement
 clauses is a list of clauses from database that haven't beed checked yet
 cont is a continuation *)
 let rec functor_eval functor_term database rep clauses cont =
-    let term = replace functor_term rep in (* replace variables in term *)
-      match clauses with
-	  [] -> cont (false,[]) (* no more facts or implications in database *)
-	| clause::clauses' -> (match clause with
-				   SingleClause dterm -> let uni = (unify term dterm rep)   (* found a fact in database *)
-				   in
-				     if fst uni then
-				       (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
-				     else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
-				 | ClauseImplication(dterm,condition) -> let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
-				   in
-				      if fst uni then
-					try
-					  (* if term unifies with left side of implication then try to evaluate it's condition *)
-					  evaluate condition database (snd uni) database 
-					    (fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt)) 
-					with
-					    Cut ret_value -> cont ret_value (* handle cut operator *)
-				      else functor_eval term database rep clauses' cont)
-(* evaluates terms *)
+  let term = replace functor_term rep in (* replace variables in term *)
+    match clauses with
+	[] -> cont (false,[]) (* no more facts or implications in database *)
+      | dclause::clauses' -> 
+	  let clause = make_unique dclause in
+	  (match clause with
+	       SingleClause dterm -> let uni = (unify term dterm rep)   (* found a fact in database *)
+	       in
+		 if fst uni then
+		   (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
+		 else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
+	     | ClauseImplication(dterm,condition) -> let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
+	       in
+		 if fst uni then
+		   try
+		      (* if term unifies with left side of implication then try to evaluate it's condition *)
+		      evaluate condition database (snd uni) database 
+			(fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt))
+		   with
+		       Cut ret_value -> cont ret_value (* handle cut operator *)
+		 else functor_eval term database rep clauses' cont)
+	  (* evaluates terms *)
 and evaluate term database rep clauses cont =
   let repterm = replace term rep             (* apply replacement to the term *)
   in
@@ -252,21 +277,7 @@ let interpret term database =
 	   else ())
 	else
 	  if (List.length !conts) = 0 then
-	    print_string "No\n"
+	    (print_string "No\n";
+	     continue := true)
 	  else ())
      done)
-
-
-let make_unique clause =
-  let var_list = ref []
-  and replacement = ref []
-  in 
-  (match clause with
-       SingleClause term -> var_list := get_variables term []
-     | ClauseImplication (term1,term2) ->	
-	var_list := get_variables term2 (get_variables term1 []));
-  replacement := List.map (fun var -> (var, TermVariable (get_unique_var()))) !var_list;
-  (match clause with
-      SingleClause term -> SingleClause (replace term !replacement)
-    | ClauseImplication (term1,term2) ->
-	ClauseImplication (replace term1 !replacement, replace term2 !replacement))

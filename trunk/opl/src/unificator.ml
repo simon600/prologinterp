@@ -5,6 +5,12 @@ exception Type_error;;
 
 (* makes a string of term *)
 let rec string_of_term term =
+  let rec string_of_arguments args =
+  match args with
+	      [] -> ""
+	    | [t] -> (string_of_term t)
+	    | t::terms -> (string_of_term t)^","^(string_of_arguments terms)
+  in
   match term with
       TermOr(t1,t2) -> (string_of_term t1)^"; "^(string_of_term t2)
     | TermAnd(t1,t2) -> (string_of_term t1)^", "^(string_of_term t2)
@@ -16,12 +22,7 @@ let rec string_of_term term =
 							      Integer n -> string_of_int n
 							    | Float f -> string_of_float f))
     | TermFunctor(nam,args) ->
-	let rec string_of_arguments args =
-	  match args with
-	      [] -> ""
-	    | [t] -> (string_of_term t)
-	    | t::terms -> (string_of_term t)^","^(string_of_arguments terms)
-	in
+	
 	  nam^"("^(string_of_arguments args)^")"
     | TermIs(t1,t2) -> (string_of_term t1)^" is "^(string_of_term t2)
     | TermIfThen(t1,t2) -> "if "^(string_of_term t1)^" then "^(string_of_term t2)
@@ -41,6 +42,11 @@ let rec string_of_term term =
     | TermTermUnify(t1,t2) -> (string_of_term t1)^" = "^(string_of_term t2)
     | TermNegation t -> "not "^(string_of_term t)
     | TermTermNotUnify(t1,t2) -> (string_of_term t1)^" /= "^(string_of_term t2)
+    | TermList list ->
+	(match list with
+	    EmptyList -> "[]"
+	  | NormalList args -> "["^(string_of_arguments args)^"]"
+	  | DividedList(args,term) -> "["^(string_of_arguments args)^" | "^(string_of_term term)^"]")
     | _ -> "";;
 
 
@@ -106,6 +112,11 @@ let rec replace term replacement =
     | TermTermUnify(t1,t2) -> TermTermUnify(replace t1 replacement, replace t2 replacement)
     | TermTermNotUnify(t1,t2) -> TermTermNotUnify(replace t1 replacement, replace t2 replacement)
     | TermNegation t -> TermNegation (replace t replacement)
+    | TermList list ->
+	(match list with
+	    EmptyList -> term
+	  | NormalList args -> TermList (NormalList (List.map rep args))
+	  | DividedList(args,term) -> TermList (DividedList(List.map rep args, rep term)))
     | _ -> term
 
 
@@ -119,8 +130,26 @@ let rec add_replacement (var,term) replacement =
 
 (* tries to unify two terms, returns if terms can be unified and replacement needed for unification *)
 let rec unify term1 term2 rep =
-  let rterm1 = replace term1 rep  (* append replacment for terms to unify *)
+  let rec unify_args args1 args2 rep = (* unifies arguments of functors *)
+    (match args1 with
+	 [] -> (true,rep)
+       | term1::terms1 -> (match args2 with
+			       [] -> raise Type_error
+			     | term2::terms2 -> let uni = unify term1 term2 rep
+			       in
+				 if fst uni then unify_args terms1 terms2 (snd uni) else (false,[])))
+  and divide_list list n =
+    let rec divlist list1 list2 n =
+      match list2 with
+	  [] -> (list1,[])
+	| hd::tl -> if n = 0 then (list1,list2) else divlist (hd::list1) tl (n-1)
+    in
+    let (list1,list2) = divlist [] list n
+    in
+      (List.rev list1, list2)  
+  and rterm1 = replace term1 rep  (* append replacment for terms to unify *)
   and rterm2 = replace term2 rep
+  
   in
     if rterm1 = rterm2 then (true,rep)  (* terms are the same *)
     else
@@ -160,77 +189,127 @@ let rec unify term1 term2 rep =
 						       if fst uni then unify t12 t22 (snd uni)
 						       else (false,[])
 						   | _ -> (false,[]))
-	       | TermArithmeticDiv(t11,t12) -> (match rterm2 with
-						    TermArithmeticDiv(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticDiv(t21,t22) -> (match rterm1 with
+						    TermArithmeticDiv(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticIntDiv(t11,t12) -> (match rterm2 with
-						    TermArithmeticIntDiv(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticIntDiv(t21,t22) -> (match rterm1 with
+						    TermArithmeticIntDiv(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticEquality(t11,t12) -> (match rterm2 with
-						    TermArithmeticEquality(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticEquality(t21,t22) -> (match rterm1 with
+						    TermArithmeticEquality(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticInequality(t11,t12) -> (match rterm2 with
-						    TermArithmeticInequality(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticInequality(t21,t22) -> (match rterm1 with
+						    TermArithmeticInequality(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticLess(t11,t12) -> (match rterm2 with
-						    TermArithmeticLess(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticLess(t21,t22) -> (match rterm1 with
+						    TermArithmeticLess(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticGreater(t11,t12) -> (match rterm2 with
-						    TermArithmeticGreater(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticGreater(t21,t22) -> (match rterm1 with
+						    TermArithmeticGreater(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticLeq(t11,t12) -> (match rterm2 with
-						    TermArithmeticLeq(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticLeq(t21,t22) -> (match rterm1 with
+						    TermArithmeticLeq(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermArithmeticGeq(t11,t12) -> (match rterm2 with
-						    TermArithmeticGeq(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermArithmeticGeq(t21,t22) -> (match rterm1 with
+						    TermArithmeticGeq(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermTermEquality(t11,t12) -> (match rterm2 with
-						    TermTermEquality(t21,t22) -> let uni1 = unify t11 t21 rep in
+	       | TermTermEquality(t21,t22) -> (match rterm1 with
+						   TermTermEquality(t11,t12) -> let uni1 = unify t11 t21 rep in
+						      if fst uni1 then unify t12 t22 (snd uni1)
+						      else (false,[])
+						 | _ -> (false,[]))
+	       | TermTermUnify(t21,t22) -> (match rterm1 with
+						TermTermUnify(t11,t12) -> let uni1 = unify t11 t21 rep in
+						  if fst uni1 then unify t12 t22 (snd uni1)
+						  else (false,[])
+					      | _ -> (false,[]))
+	       | TermTermNotUnify(t21,t22) -> (match rterm1 with
+						    TermTermNotUnify(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))
-	       | TermTermUnify(t11,t12) -> (match rterm2 with
-						    TermTermUnify(t21,t22) -> let uni1 = unify t11 t21 rep in
-						      if fst uni1 then unify t12 t22 (snd uni1)
-						      else (false,[])
-						  | _ -> (false,[]))
-	       | TermTermNotUnify(t11,t12) -> (match rterm2 with
-						    TermTermNotUnify(t21,t22) -> let uni1 = unify t11 t21 rep in
-						      if fst uni1 then unify t12 t22 (snd uni1)
-						      else (false,[])
-						  | _ -> (false,[]))
-	       | TermNegation t1 -> (match rterm2 with
-						    TermNegation t2 -> unify t1 t2 rep
+	       | TermNegation t2 -> (match rterm1 with
+						    TermNegation t1 -> unify t1 t2 rep
 						  | _ -> (false,[]))
 	       | TermFunctor(nam2,args2) -> 
-		   let rec unify_args args1 args2 rep = (* unifies arguments of functors *)
-		     (match args1 with
-			 [] -> (true,rep)
-		       | term1::terms1 -> (match args2 with
-					       [] -> raise Type_error
-					     | term2::terms2 -> let uni = unify term1 term2 rep
-					       in
-						 if fst uni then unify_args terms1 terms2 (snd uni) else (false,[])))
-		   in
+		   
 		     (match rterm1 with
-			  TermFunctor(nam1,args1) -> if nam1 = nam2 && (List.length args1) = (List.length args2) then unify_args args1 args2 rep else (false,[])
+			  TermFunctor(nam1,args1) ->
+			    if nam1 = nam2 && (List.length args1) = (List.length args2) then
+			      unify_args args1 args2 rep
+			    else (false,[])
 			| _ -> (false,[]))
+	       | TermList (EmptyList) -> (match rterm1 with
+					      TermList (EmptyList) -> (true,rep)
+					    | _ ->  (false,[]))
+	       | TermList (NormalList args2) -> (match rterm1 with
+						     TermList (NormalList args1) ->
+						       if (List.length args2) = (List.length args1) then
+							 unify_args args1 args2 rep
+						       else (false,[])
+						   | TermList (DividedList (args1,term)) ->
+						       if (List.length args1) > (List.length args2) then
+							 (false,[])
+						       else
+							 let (args2',args2'') = divide_list args2 (List.length args1)
+							 in
+							 let uni = unify_args args2' args1 rep in
+							   if fst uni then
+							     unify (TermList (NormalList args2'')) term (snd uni)
+							   else
+							     (false,[])
+						   | _ -> (false,[]))
+	       | TermList (DividedList(args2,term2)) -> (match rterm1 with
+							   TermList (NormalList args1) ->
+							     if (List.length args2) > (List.length args1) then
+							       (false,[])
+							     else
+							       let (args1',args1'') = divide_list args1 (List.length args2)
+							       in
+							       let uni = unify_args args2 args1' rep in
+								 if fst uni then
+								   unify (TermList (NormalList args1'')) term2 (snd uni)
+								 else
+								   (false,[])
+							 | TermList (DividedList(args1,term1)) ->
+							     if (List.length args2) >= (List.length args1) then
+							       let (args2', args2'') = divide_list args2 (List.length args1)
+							       in
+							       let uni = unify_args args2' args1 rep in
+								 if fst uni then
+								   if (List.length args2'') = 0 then
+								     unify term1 term2 (snd uni)
+								   else
+								     unify term1 (TermList (DividedList (args2'',term2))) (snd uni)
+								 else
+								   (false,[])
+							     else
+							       let (args1', args1'') = divide_list args1 (List.length args2)
+							       in
+							       let uni = unify_args args2 args1' rep in
+								 if fst uni then
+								   unify (TermList (DividedList (args1'',term1))) term2 (snd uni)
+								 else 
+								   (false,[])
+							 | _ -> (false,[]))
+		   
+							 
 	       | _ -> if rterm1 = rterm2 then (true,rep) else (false,[]))
 
 
