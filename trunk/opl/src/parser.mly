@@ -8,12 +8,13 @@
 
 /* ocamlyacc declarations */
 
-%token <string> STRING 
-%token <string> CONSTANT 
+%token <string> STRING  
 %token <string> VARIABLE
 %token <string> NAME
-%token <float> FLOATNUMBER 
-%token <int> INTEGERNUMBER
+%token <float> UNSIGNEDFLOAT
+%token <int> UNSIGNEDINTEGER
+%token <float> SIGNEDFLOAT
+%token <int> SIGNEDINTEGER
 %token DOT DOUBLEDOT
 %token COLONHYPHEN
 %token ARROW 
@@ -394,7 +395,7 @@ list_term:
     {
     
         print_endline "[]";
-        Types.TermList []
+        Types.TermList (Types.EmptyList)
     }
     | LBRACKET list_body RBRACKET
     {
@@ -406,11 +407,11 @@ list_term:
 list_body:
     | arguments
     {
-        $1
+        Types.NormalList $1
     }
-    | arguments PIPE arguments
+    | arguments PIPE term
     {
-        $1 @ $3
+        Types.DividedList ($1, $3)
     }
 
 functor_name:
@@ -456,12 +457,22 @@ name:
 ;
 
 number:
-    | FLOATNUMBER
+    | UNSIGNEDFLOAT
     {
         print_endline "float"; 
         Types.Float $1 
     }
-    | INTEGERNUMBER 
+    | UNSIGNEDINTEGER 
+    { 
+        print_endline "int"; 
+        Types.Integer $1 
+    }
+    | SIGNEDFLOAT
+    {
+        print_endline "float"; 
+        Types.Float $1 
+    }
+    | SIGNEDINTEGER 
     { 
         print_endline "int"; 
         Types.Integer $1 

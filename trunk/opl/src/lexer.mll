@@ -89,8 +89,10 @@ let sign = '+' | '-'                                     (* signs *)
 let exp = ('e' | 'E') sign? digit+                       (* optional exponent *)
 let simple_float = digit* '.' digit+                     (* simplest float *)
 let simple_integer = digit+                              (* simplest integer *)
-let float_number = sign? simple_float exp?               (* valid prolog float *)
-let integer_number = sign? simple_integer exp?           (* valid prolog integer *)
+let unsigned_float = simple_float exp?                   (* floats with no sign *)
+let unsigned_integer = simple_integer exp?               (* integers with no sign *)
+let signed_float = sign? simple_float exp?               (* valid prolog float *)
+let signed_integer = sign? simple_integer exp?           (* valid prolog integer *)
 
 let whitespace = [' ' '\t' '\n']
 
@@ -128,19 +130,34 @@ rule token = parse
                     | Not_found -> NAME (id) 
         }
 
-        | float_number as fl         
+        | unsigned_float as fl         
         {       
                 print_endline ("FLOAT rule -> <" ^ fl^ ">");
                 flush stdout;
                         
-                FLOATNUMBER (float_of_string (Lexing.lexeme lexbuf))    
+                UNSIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))    
         } 
 
-        | integer_number as inte       
+        | unsigned_integer as inte       
         {       
                 print_endline ("INTEGER rule -> <" ^ inte^ ">");
                 flush stdout;
-                INTEGERNUMBER (int_of_string (Lexing.lexeme lexbuf))    } 
+                UNSIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))    }
+
+        | signed_float as fl
+        {
+                print_endline ("FLOAT rule -> <" ^ fl^ ">");
+                flush stdout;
+                        
+                SIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))  
+        }
+
+        | signed_integer as inte
+        {
+                print_endline ("INTEGER rule -> <" ^ inte^ ">");
+                flush stdout;
+                SIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))   
+        } 
 
         | nstring as str               
         {
