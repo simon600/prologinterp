@@ -12,7 +12,7 @@ and term =                                      (* prolog term types *)
   | TermConstant of constant                    (* prolog constant term *)
   | TermVariable of name                        (* prolog variable terms *)
   | TermFunctor of name * arguments             (* functor term *)
-  | TermList of term list                       (* prolog lists *)
+  | TermList of lists                           (* prolog lists *)
 
   | TermIfThen of term * term                   (* if then *)
   | TermIfThenElse of term * term * term        (* if then else *)
@@ -61,6 +61,11 @@ and term =                                      (* prolog term types *)
   | TermBitwiseNot of term * term               (* \ *)
 
   | TermCut                                     (* ! *)
+
+and lists =
+  | EmptyList
+  | NormalList of arguments
+  | DividedList of arguments * term
 
 and arguments = term list                (* functor arguments *)
 
