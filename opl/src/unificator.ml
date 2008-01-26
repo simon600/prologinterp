@@ -3,10 +3,11 @@ open Types;;
 exception Unsuported_term;;
 exception Type_error;;
 
-let rec term_to_string term =
+(* makes a string of term *)
+let rec string_of_term term =
   match term with
-      TermOr(t1,t2) -> (term_to_string t1)^"; "^(term_to_string t2)
-    | TermAnd(t1,t2) -> (term_to_string t1)^", "^(term_to_string t2)
+      TermOr(t1,t2) -> (string_of_term t1)^"; "^(string_of_term t2)
+    | TermAnd(t1,t2) -> (string_of_term t1)^", "^(string_of_term t2)
     | TermVariable v -> v
     | TermString str -> str
     | TermConstant const -> (match const with
@@ -18,34 +19,37 @@ let rec term_to_string term =
 	let rec string_of_arguments args =
 	  match args with
 	      [] -> ""
-	    | [t] -> (term_to_string t)
-	    | t::terms -> (term_to_string t)^","^(string_of_arguments terms)
+	    | [t] -> (string_of_term t)
+	    | t::terms -> (string_of_term t)^","^(string_of_arguments terms)
 	in
 	  nam^"("^(string_of_arguments args)^")"
-    | TermIs(t1,t2) -> (term_to_string t1)^" is "^(term_to_string t2)
-    | TermIfThen(t1,t2) -> "if "^(term_to_string t1)^" then "^(term_to_string t2)
-    | TermIfThenElse(t1,t2,t3) -> "if "^(term_to_string t1)^" then "^(term_to_string t2)^" else "^(term_to_string t3)
-    | TermArithmeticPlus(t1,t2) -> (term_to_string t1)^" + "^(term_to_string t2)
-    | TermArithmeticMinus(t1,t2) -> (term_to_string t1)^" - "^(term_to_string t2)
-    | TermArithmeticMult(t1,t2) -> (term_to_string t1)^" * "^(term_to_string t2)
-    | TermArithmeticDiv(t1,t2) -> (term_to_string t1)^" / "^(term_to_string t2)
-    | TermArithmeticIntDiv(t1,t2) -> (term_to_string t1)^" // "^(term_to_string t2)
-    | TermArithmeticEquality(t1,t2) -> (term_to_string t1)^" =:= "^(term_to_string t2)
-    | TermArithmeticInequality(t1,t2) -> (term_to_string t1)^" =\\= "^(term_to_string t2)
-    | TermArithmeticLess(t1,t2) -> (term_to_string t1)^" < "^(term_to_string t2)
-    | TermArithmeticGreater(t1,t2) -> (term_to_string t1)^" >= "^(term_to_string t2)
-    | TermArithmeticLeq(t1,t2) -> (term_to_string t1)^" <= "^(term_to_string t2)
-    | TermArithmeticGeq(t1,t2) -> (term_to_string t1)^" >= "^(term_to_string t2)
-    | TermTermEquality(t1,t2) -> (term_to_string t1)^" == "^(term_to_string t2)
-    | TermTermUnify(t1,t2) -> (term_to_string t1)^" = "^(term_to_string t2)
-    | TermNegation t -> "not "^(term_to_string t)
-    | TermTermNotUnify(t1,t2) -> (term_to_string t1)^" /= "^(term_to_string t2)
+    | TermIs(t1,t2) -> (string_of_term t1)^" is "^(string_of_term t2)
+    | TermIfThen(t1,t2) -> "if "^(string_of_term t1)^" then "^(string_of_term t2)
+    | TermIfThenElse(t1,t2,t3) -> "if "^(string_of_term t1)^" then "^(string_of_term t2)^" else "^(string_of_term t3)
+    | TermArithmeticPlus(t1,t2) -> (string_of_term t1)^" + "^(string_of_term t2)
+    | TermArithmeticMinus(t1,t2) -> (string_of_term t1)^" - "^(string_of_term t2)
+    | TermArithmeticMult(t1,t2) -> (string_of_term t1)^" * "^(string_of_term t2)
+    | TermArithmeticDiv(t1,t2) -> (string_of_term t1)^" / "^(string_of_term t2)
+    | TermArithmeticIntDiv(t1,t2) -> (string_of_term t1)^" // "^(string_of_term t2)
+    | TermArithmeticEquality(t1,t2) -> (string_of_term t1)^" =:= "^(string_of_term t2)
+    | TermArithmeticInequality(t1,t2) -> (string_of_term t1)^" =\\= "^(string_of_term t2)
+    | TermArithmeticLess(t1,t2) -> (string_of_term t1)^" < "^(string_of_term t2)
+    | TermArithmeticGreater(t1,t2) -> (string_of_term t1)^" >= "^(string_of_term t2)
+    | TermArithmeticLeq(t1,t2) -> (string_of_term t1)^" <= "^(string_of_term t2)
+    | TermArithmeticGeq(t1,t2) -> (string_of_term t1)^" >= "^(string_of_term t2)
+    | TermTermEquality(t1,t2) -> (string_of_term t1)^" == "^(string_of_term t2)
+    | TermTermUnify(t1,t2) -> (string_of_term t1)^" = "^(string_of_term t2)
+    | TermNegation t -> "not "^(string_of_term t)
+    | TermTermNotUnify(t1,t2) -> (string_of_term t1)^" /= "^(string_of_term t2)
     | _ -> "";;
 
+
+
+(* writes replacement to standard output *)
 let rec print_replacement rep =
   match rep with
       [] -> ()
-    | (v,rep_term)::trep -> print_string (v^" = "^(term_to_string rep_term)^"   "); print_replacement trep;;
+    | (v,rep_term)::trep -> print_string (v^" = "^(string_of_term rep_term)^"   "); print_replacement trep;;
 
 
 
@@ -69,9 +73,11 @@ let rec print_replacement rep =
     | TermTermEquality(t1,t2) -> TermTermEquality(replace_var t1 var rep_term, replace_var t2 var rep_term)
     | _ -> term*)
 
+
+
 (* appends a replacement to a term *)
 let rec replace term replacement = 
-  let rep term' =
+  let rep term' =                       (* used for maping in TermFunctor *)
       replace term' replacement
   in
   match term with
@@ -81,8 +87,8 @@ let rec replace term replacement =
 	 (match replacement with
 	     [] -> term
 	   | (v,rep)::replacement' -> 
-	       if v = var then rep
-	       else replace term replacement')
+	       if v = var then rep   (* found current variable var in replacement *)
+	       else replace term replacement') (* continues searching for variable *)
     | TermFunctor(nam,args) -> TermFunctor(nam,List.map rep args)
     | TermIs(t1,t2) -> TermIs(replace t1 replacement, replace t2 replacement)
     | TermArithmeticPlus(t1,t2) -> TermArithmeticPlus(replace t1 replacement, replace t2 replacement)
@@ -106,21 +112,21 @@ let rec replace term replacement =
 (* adds new variable replacement to given replacement *)
 let rec add_replacement (var,term) replacement =
   let replace_rep (var',term') =
-    (var',replace term' [(var,term)])
+    (var',replace term' [(var,term)])   (* replaces variable var if it is in the replacement *)
   in
-    (var,term)::(List.map replace_rep replacement)
+    (var,term)::(List.map replace_rep replacement) (* replaces var in every node of replacement *)
     
 
 (* tries to unify two terms, returns if terms can be unified and replacement needed for unification *)
 let rec unify term1 term2 rep =
-  let rterm1 = replace term1 rep
+  let rterm1 = replace term1 rep  (* append replacment for terms to unify *)
   and rterm2 = replace term2 rep
   in
-    if rterm1 = rterm2 then (true,rep)
+    if rterm1 = rterm2 then (true,rep)  (* terms are the same *)
     else
       match rterm1 with
-	  TermVariable v1 -> (true,(add_replacement (v1,rterm2) rep))
-	| _ ->
+	  TermVariable v1 -> (true,(add_replacement (v1,rterm2) rep)) (* left term is a variable so we add this variable to replacement (it will be replaced by right term *)
+	| _ ->  (* left term is not a variable *)
 	    (match rterm2 with
 		 TermAnd(t21,t22) -> (match rterm1 with
 					 TermAnd(t11,t12) -> let uni = unify t11 t21 rep in
@@ -213,7 +219,7 @@ let rec unify term1 term2 rep =
 						    TermNegation t2 -> unify t1 t2 rep
 						  | _ -> (false,[]))
 	       | TermFunctor(nam2,args2) -> 
-		   let rec unify_args args1 args2 rep =
+		   let rec unify_args args1 args2 rep = (* unifies arguments of functors *)
 		     (match args1 with
 			 [] -> (true,rep)
 		       | term1::terms1 -> (match args2 with

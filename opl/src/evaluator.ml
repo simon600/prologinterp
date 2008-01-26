@@ -6,7 +6,7 @@ exception Cant_evaluate;;
 exception No_more_conts;;
 exception Not_integer;;
 
-let c = ref 0
+let c = ref 0 (* used by get_unique_var *)
 
 (* gets unique variable *)
 let get_unique_var() =
@@ -21,7 +21,7 @@ let rec get_variables term list =
       | TermString str -> list
       | TermConstant const -> list
       | TermFunctor(nam,args) -> 
-	  let rec get_vars_from_args args list =
+	  let rec get_vars_from_args args list = (* gets variables from arguments *)
 	    match args with
 		[] -> list
 	      | t::terms -> get_vars_from_args terms (get_variables t list)
@@ -102,39 +102,44 @@ let rec arithmetic_eval term =
     | _ -> raise Not_a_number
       
 
-
+(* asks if evaluation should be continued *)
 let more() =
   print_string "More?\n";
   if read_line() = ";" then true
   else false
 
-let conts = ref []
-let add_cont cont =
+let conts = ref []    (* stores calculations to continue *)
+let add_cont cont =   (* adds calculations continuation to conts *)
   conts := cont::!conts
-let get_cont() =
+let get_cont() =      (* gets next continuation and removes it from conts *)
   match !conts with
       [] -> raise No_more_conts
     | cont::conts' -> (conts := conts'; cont)
 
-(* evaluates functor *)
+
+(* evaluates functor 
+functor_term is a term to evaluate
+database is a database loaded into the program 
+rep is a replacement
+clauses is a list of clauses from database that haven't beed checked yet
+cont is a continuation *)
 let rec functor_eval functor_term database rep clauses cont =
-    let term = replace functor_term rep in
-  match clauses with
-      [] -> cont (false,[])
-    | clause::clauses' -> (match clause with
-			      SingleClause dterm -> let uni = (unify term dterm rep)   (* found a fact in database *)
-			      in
-				if fst uni then
-				  (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni)
-				else functor_eval term database rep clauses' cont
-			    | ClauseImplication(dterm,condition) -> let uni = (unify term dterm rep)
-			      in
-				(add_cont (fun () -> functor_eval term database rep clauses' cont);
-				if fst uni then
-				  evaluate condition database (snd uni) database (fun vt -> cont vt)
-				else cont (false,[])))
-
-
+    let term = replace functor_term rep in (* replace variables in term *)
+      match clauses with
+	  [] -> cont (false,[]) (* no more facts or implications in database *)
+	| clause::clauses' -> (match clause with
+				   SingleClause dterm -> let uni = (unify term dterm rep)   (* found a fact in database *)
+				   in
+				     if fst uni then
+				       (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
+				     else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
+				 | ClauseImplication(dterm,condition) -> let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
+				   in
+				     (add_cont (fun () -> functor_eval term database rep clauses' cont); (* add possible continuation of calculations to conts *)
+				      if fst uni then
+					evaluate condition database (snd uni) database (fun vt -> cont vt) (* if term unifies with left side of implication then try to evaluate it's condition *)
+				      else cont (false,[])))
+(* evaluates terms *)
 and evaluate term database rep clauses cont =
   let repterm = replace term rep             (* apply replacement to the term *)
   in
@@ -143,8 +148,8 @@ and evaluate term database rep clauses cont =
     | TermTermNotUnify(term1,term2) -> 
 	let uni = unify term1 term2 rep in
 	  cont (not (fst uni), snd uni)
-    | TermArithmeticEquality(t1,t2) -> let n1 = arithmetic_eval t1
-				       and n2 = arithmetic_eval t2
+    | TermArithmeticEquality(t1,t2) -> let n1 = arithmetic_eval t1 (* find value of left  term *)
+				       and n2 = arithmetic_eval t2 (* find value of right term *)
       in
 	if n1 = n2 then cont (true,rep)
       else cont (false,[])
@@ -208,28 +213,30 @@ and evaluate term database rep clauses cont =
 	cont (unify t1 n2 [])
     | TermFunctor(nam,args) -> functor_eval repterm database rep clauses cont
     | TermAnd(t1,t2) -> 
-	evaluate t1 database rep clauses
+	evaluate t1 database rep clauses (* evaluate first term *)
 	  (fun vt1 ->
 	     if fst vt1 then
-	       evaluate t2 database (snd vt1) clauses (fun vt2 -> cont vt2)
+	       evaluate t2 database (snd vt1) clauses (fun vt2 -> cont vt2) (* if first term returns true in evaluation then the other one will be tried to be evaluated *)
 	     else cont (false,[]))
-    | TermOr(t1,t2) -> (add_cont (fun () -> evaluate t2 database rep clauses cont);
-			evaluate t1 database rep clauses (fun vt -> cont vt))
+    | TermOr(t1,t2) -> (add_cont (fun () -> evaluate t2 database rep clauses cont); (* add another evaluation possibility to conts *)
+			evaluate t1 database rep clauses (fun vt -> cont vt)) (* evaluate first term *)
     | _ -> raise Cant_evaluate
 
+(* evaluates all possible ways a term given a specific database *)
 let interpret term database =
   let continue = ref true
-  and eval = ref (false,[])
-  and cont = ref (fun() -> (false,[]))
-  and filter replacement = 
+  and eval = ref (false,[]) (* stores result of evaluation *)
+  and cont = ref (fun() -> (false,[])) (* stores calculations *)
+  and filter replacement = (* filters replacement that only variables that exist in term remains *)
     let variables = (get_variables term []) in
     List.filter (fun (var,_) -> List.exists (fun v -> v = var) variables) replacement
   in
-    (conts := [];
-     add_cont (fun () -> evaluate term database [] database (fun v -> v));
+    (conts := []; (* clear conts *)
+     add_cont (fun () -> evaluate term database [] database (fun v -> v)); (* add first evaluation to conts *)
+     (* evaluate paths of calculations while they are availible and user whishes to continue *)
      while (List.length !conts > 0 && !continue) do
-       (cont := get_cont();
-	eval := !cont();
+       (cont := get_cont(); (* get another evaluation *)
+	eval := !cont(); (* invoke it *)
 	if (fst !eval) then
 	  (print_string "Yes\n";
 	   print_replacement (filter (snd !eval));
