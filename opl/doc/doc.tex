@@ -55,6 +55,17 @@
 	w dodatku B. \ref{Appendix:grammar}; symbolem startowym gramatyki w tym wypadku jest \textit{<query>}.		
 	
 \section{System wnioskowania}
+	System wnioskowania dzia³a w doœæ prosty sposób. Interpreter zapytany o jak¹œ relacjê zaczyna przegl¹danie po kolei bazy wiedzy. Stara siê zunifikowaæ zapytanie z faktem lub nastêpnikiem implikacji w bazie danych.
+
+	Jeœli zapytanie zosta³o zunifikowane z faktem to zwrócona zostaje odpowiedŸ („Yes”) oraz podstawienie które zosta³o u¿yte do unifikacji.
+
+	Jeœli zapytanie zosta³o zunifikowane z nastêpnikiem implikacji to program stara siê udowodniæ poprzednik implikacji, korzystaj¹c ju¿ z podstawienia które zosta³o wygenerowane przy unifikacji z nastêpnikiem. Proces jest rekurencyjny, tzn. podtermy s¹ interpretowane w taki sam sposób jak termy do których nale¿¹.
+	
+	W trakcie wnioskowania zapamiêtywane s¹ inne mo¿liwe œcie¿ki dowodu. Po zwróceniu wyniku u¿ytkownik jest pytany czy chce szukaæ innych rozwi¹zañ.
+
+	W wypadku natrafienia na operator odciêcia program nie zapamiêtuje dalszych œcie¿ek obliczeñ, w ten sposób mo¿na przerwaæ obliczenia, które mog¹ trwaæ w nieskoñczonoœæ (do przepe³nienia stosu).
+
+	
 \section{Budowa interpretera}
 	\subsection{Podzia³ logiczny}
 	\subsection{Podzia³ fizyczny}
