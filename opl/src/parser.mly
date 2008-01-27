@@ -64,13 +64,11 @@
 
 clause_list: 
     | clause DOT clause_list 
-    { 
-        print_endline "multi_clause"; 
+    {
         $1 :: $3 
     }
     | clause DOUBLEDOT 
     { 
-        print_endline "single_clause"; 
         [$1] 
     } 
 ;
@@ -78,7 +76,6 @@ clause_list:
 query:
     | goal DOT 
     { 
-        print_endline "query "; 
         $1 
     }
 ;
@@ -86,12 +83,10 @@ query:
 clause:
     | head COLONHYPHEN body 
     { 
-        print_endline "head :- body"; 
         Types.ClauseImplication ($1, $3)
     }
     | head
     { 
-        print_endline "head";
         Types.SingleClause $1 
     }
 ;
@@ -99,7 +94,6 @@ clause:
 head:
     | goal
     {
-        print_endline "head goal";
         $1 
     }
 ;
@@ -109,25 +103,21 @@ head:
 body:
     | goal SEMICOLON body 
     { 
-        print_endline "goal ; body";
         Types.TermOr ($1, $3)
     }
     | goal COMMA body 
     { 
-        print_endline "goal , body";
         Types.TermAnd ($1, $3) 
     }
     | goal 
     { 
-        print_endline "body goal"; 
         $1 
     }
 ;
 
 goal:
     | term
-    {
-        print_endline "goal"; 
+    { 
         $1 
     }
 ;
@@ -147,12 +137,10 @@ term1:
 term2:
     | term2 ARROW term3 
     { 
-        print_endline "term2 -> term3"; 
         Types.TermIfThen ($1, $3)  
     } 
     | term2 ARROW term3 COLON term3 
     {
-        print_endline "term2 -> term3; term4"; 
         Types.TermIfThenElse ($1, $3, $5)
     }
     | term3 
@@ -353,7 +341,6 @@ term9:
     }
     | term10 
     {
-        print_endline "term10";
         $1 
     }
 ;
@@ -365,27 +352,22 @@ term10:
     }
     | LPAREN term0 RPAREN 
     { 
-        print_endline "(term0)"; 
         $2 
     }
     | STRING 
     { 
-        print_endline "string"; 
         Types.TermString $1 
     }
     | constant 
     { 
-        print_endline "constant"; 
         Types.TermConstant $1 
     }
     | VARIABLE 
     { 
-        print_endline "variable"; 
         Types.TermVariable $1 
     }
     | functor_name LPAREN arguments RPAREN 
     { 
-        print_endline "functor(arguments)";
         Types.TermFunctor ($1, $3) 
     }
 ;
@@ -393,13 +375,10 @@ term10:
 list_term:
     | LBRACKET RBRACKET 
     {
-    
-        print_endline "[]";
         Types.TermList (Types.EmptyList)
     }
     | LBRACKET list_body RBRACKET
     {
-        print_endline "[arguments]";
         Types.TermList $2
     }
 ;
@@ -417,7 +396,6 @@ list_body:
 functor_name:
     | name 
     { 
-        print_endline "functor name"; 
         $1
     } 
 ;
@@ -425,12 +403,10 @@ functor_name:
 arguments:
     | term0 COMMA arguments 
     { 
-        print_endline "term0, arguments"; 
         ($1) :: ($3) 
     }
     | term0 
     { 
-        print_endline "term0";
         [$1] 
     }
 ;
@@ -438,12 +414,10 @@ arguments:
 constant:
     | name 
     { 
-        print_endline "atom";
         ConstantAtom $1 
     }
     | number 
     {
-        print_endline "number"; 
         ConstantNumber $1 
     }
 ;
@@ -451,7 +425,6 @@ constant:
 name:
     | NAME 
     { 
-        print_endline "name";
         $1 
     }
 ;
@@ -459,22 +432,18 @@ name:
 number:
     | UNSIGNEDFLOAT
     {
-        print_endline "float"; 
         Types.Float $1 
     }
     | UNSIGNEDINTEGER 
     { 
-        print_endline "int"; 
         Types.Integer $1 
     }
     | SIGNEDFLOAT
     {
-        print_endline "float"; 
         Types.Float $1 
     }
     | SIGNEDINTEGER 
     { 
-        print_endline "int"; 
         Types.Integer $1 
     }
 %%  

@@ -105,13 +105,11 @@ rule token = parse
 
         | ".."
         {       
-                print_endline "doubledot";
                 DOUBLEDOT       
         }
 
         | "."   
         {      
-                print_endline "dot";
                 DOT     }
 
         | '%' 
@@ -120,54 +118,40 @@ rule token = parse
         | "/*"
         {       multiline_comment 0 lexbuf    }
 
-        | name as id            
+        | name as id          
         {       
-                print_endline ("NAME rule -> <" ^ id ^ ">");
-
                 try
                     Hashtbl.find keywords id
                 with
                     | Not_found -> NAME (id) 
         }
 
-        | unsigned_float as fl         
+        | unsigned_float         
         {       
-                print_endline ("FLOAT rule -> <" ^ fl^ ">");
-                flush stdout;
-                        
                 UNSIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))    
         } 
 
-        | unsigned_integer as inte       
+        | unsigned_integer      
         {       
-                print_endline ("INTEGER rule -> <" ^ inte^ ">");
-                flush stdout;
                 UNSIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))    }
 
-        | signed_float as fl
+        | signed_float
         {
-                print_endline ("FLOAT rule -> <" ^ fl^ ">");
-                flush stdout;
-                        
                 SIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))  
         }
 
-        | signed_integer as inte
+        | signed_integer
         {
-                print_endline ("INTEGER rule -> <" ^ inte^ ">");
-                flush stdout;
                 SIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))   
         } 
 
-        | nstring as str               
+        | nstring              
         {
-                print_endline ("STRING rule -> <" ^ str^ ">");
                 STRING (Lexing.lexeme lexbuf)        
         }
         
-        | variable as var               
+        | variable               
         {
-                print_endline ("VARIABLE rule -> <" ^ var^ ">");
                 VARIABLE (Lexing.lexeme lexbuf)
         }
 
@@ -196,9 +180,6 @@ and multiline_comment level = parse
 
         |  _    
         {       multiline_comment level lexbuf          }
-
-
-
 
 (* trailer section *)
 {

@@ -8,9 +8,8 @@ open Evaluator;;
  * reading database from input files.
  * params - program parameters
  *)
-
 let read_database params = 
-
+ 
     let database = ref []           (* database we create *)
     and clause_list = ref[]         (* clauses we read *)
     in          
@@ -21,25 +20,36 @@ let read_database params =
      *)
 
     let extend_database filename =                          
+        let read_file source =
+            let buffer = ref "" 
+            in 
+            try
+                while (true) do
+                    buffer := !buffer ^ (input_line source) ^ "\n"
+                done;
+                !buffer (* dummy *) 
+            with 
+                | End_of_file -> !buffer
+        in    
+            
         try
             let source      = open_in filename in           (* input channel *)
-            let file_length = in_channel_length source in   (* total file length *)
-            let buffer      = String.create file_length     (* buffer we read into *)
-            in begin    
-                    really_input source buffer 0 (file_length - 2);     (* reading from file, forcing to read everything into buffer *)		                    
-                        clause_list := (Parser.clause_list Lexer.token (Lexing.from_string
-                        buffer));		        
-			database := (List.map make_unique !clause_list) @ !database;
-                        print_endline "ok";
+            let buffer      = read_file source in
+               begin
+                 close_in source;
+ 
+                 clause_list := (Parser.clause_list Lexer.token (Lexing.from_string buffer));		        
+	         database := (List.map make_unique !clause_list) @ !database;
                end
         with 
-            | Sys_error s -> print_endline ((Filename.basename filename)^ ": " ^ s)        (* case of system error *)
-            | End_of_file -> print_endline ((Filename.basename filename)^ 
-                        ": could not read from file" )                                     (* shouldn't happen, but who knows *)
-            | Lexer.EOF   -> ()                                                            (* lexer has nothing to lex left *)
-     (*     |     _       -> print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.") (* handling other cases *) *)
+            | Sys_error s ->    (* case of system error *)
+                print_endline ((Filename.basename filename)^ ": " ^ s)       
+            | End_of_file ->    (* shouldn't happen, but who knows *)
+                print_endline ((Filename.basename filename)^ ": could not read from file" );                                                   
+            | Lexer.EOF   -> () (* lexer has nothing to lex left *)                                                            
+            |     _       ->    (* handling other cases *)
+                print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.")
     in
-
     begin
         let parameters = match Array.length params with              (* the first argument of the program is it's name *)
                             |  1  -> Array.make 0 ""                 (* omit the first parameter - case it's the only one *)
@@ -50,7 +60,6 @@ let read_database params =
                                         else print_endline                  (* warn user *)
                                                 ("File " ^ (Filename.basename filename) ^ " does not exist."))   
                         parameters;
-            print_int (List.length !database);
             !database                                           (* return created database *)
     end
 ;;
