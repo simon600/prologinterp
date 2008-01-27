@@ -91,8 +91,6 @@ let simple_float = digit* '.' digit+                     (* simplest float *)
 let simple_integer = digit+                              (* simplest integer *)
 let unsigned_float = simple_float exp?                   (* floats with no sign *)
 let unsigned_integer = simple_integer exp?               (* integers with no sign *)
-let signed_float = sign? simple_float exp?               (* valid prolog float *)
-let signed_integer = sign? simple_integer exp?           (* valid prolog integer *)
 
 let whitespace = [' ' '\t' '\n']
 
@@ -131,20 +129,10 @@ rule token = parse
                 UNSIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))    
         } 
 
-        | unsigned_integer      
+        | unsigned_integer 
         {       
-                UNSIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))    }
-
-        | signed_float
-        {
-                SIGNEDFLOAT (float_of_string (Lexing.lexeme lexbuf))  
+                UNSIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))    
         }
-
-        | signed_integer
-        {
-                SIGNEDINTEGER (int_of_string (Lexing.lexeme lexbuf))   
-        } 
-
         | nstring              
         {
                 STRING (Lexing.lexeme lexbuf)        
