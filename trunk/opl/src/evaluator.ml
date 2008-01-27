@@ -160,10 +160,8 @@ let rec functor_eval functor_term database rep clauses cont =
 		   (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
 		 else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
 	     | ClauseImplication(dterm,condition) -> 		 
-		 ((*print_string ("Imp:   "^(string_of_term dterm)^" :- "^(string_of_term condition)^"\n\n");*)
-		  let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
-	       in
-		 (*print_replacement (snd uni); print_string "\n\n";*)
+		 let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
+	       in		 
 		 if fst uni then
 		   try
 		     add_cont (fun () -> functor_eval term database rep clauses' cont);
@@ -171,7 +169,7 @@ let rec functor_eval functor_term database rep clauses cont =
 		       (fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt))
 		   with
 		       Cut ret_value -> cont ret_value (* handle cut operator *)
-		 else functor_eval term database rep clauses' cont))
+		 else functor_eval term database rep clauses' cont)
 	  (* evaluates terms *)
 and evaluate term database rep clauses cont =
   let repterm = replace term rep             (* apply replacement to the term *)
