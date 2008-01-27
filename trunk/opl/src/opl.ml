@@ -1,7 +1,6 @@
 open Parser;;
 open Lexer;;
 open Types;;
-open Unificator;;
 open Evaluator;;
 
 (* 
@@ -11,7 +10,6 @@ open Evaluator;;
 let read_database params = 
  
     let database = ref []           (* database we create *)
-    and clause_list = ref[]         (* clauses we read *)
     in          
 
     (* 
@@ -37,9 +35,8 @@ let read_database params =
             let buffer      = read_file source in
                begin
                  close_in source;
- 
-                 clause_list := (Parser.clause_list Lexer.token (Lexing.from_string buffer));		        
-	         database := (List.map make_unique !clause_list) @ !database;
+                  
+	         database := (Parser.clause_list Lexer.token (Lexing.from_string buffer)) @ !database;
                end
         with 
             | Sys_error s ->    (* case of system error *)
