@@ -32,6 +32,7 @@ let rec string_of_term term =
     | TermArithmeticMult(t1,t2) -> (string_of_term t1)^" * "^(string_of_term t2)
     | TermArithmeticDiv(t1,t2) -> (string_of_term t1)^" / "^(string_of_term t2)
     | TermArithmeticIntDiv(t1,t2) -> (string_of_term t1)^" // "^(string_of_term t2)
+    | TermArithmeticModulo(t1,t2) -> (string_of_term t1)^" mod "^(string_of_term t2)
     | TermArithmeticEquality(t1,t2) -> (string_of_term t1)^" =:= "^(string_of_term t2)
     | TermArithmeticInequality(t1,t2) -> (string_of_term t1)^" =\\= "^(string_of_term t2)
     | TermArithmeticLess(t1,t2) -> (string_of_term t1)^" < "^(string_of_term t2)
@@ -79,6 +80,7 @@ let rec replace term replacement =
     | TermArithmeticMult(t1,t2) -> TermArithmeticMult(replace t1 replacement, replace t2 replacement)
     | TermArithmeticDiv(t1,t2) -> TermArithmeticDiv(replace t1 replacement, replace t2 replacement)
     | TermArithmeticIntDiv(t1,t2) -> TermArithmeticIntDiv(replace t1 replacement, replace t2 replacement)
+    | TermArithmeticModulo(t1,t2) -> TermArithmeticModulo(replace t1 replacement, replace t2 replacement)
     | TermArithmeticEquality(t1,t2) -> TermArithmeticEquality(replace t1 replacement, replace t2 replacement)
     | TermArithmeticInequality(t1,t2) -> TermArithmeticInequality(replace t1 replacement, replace t2 replacement)
     | TermArithmeticLess(t1,t2) -> TermArithmeticLess(replace t1 replacement, replace t2 replacement)
@@ -173,6 +175,11 @@ let rec unify term1 term2 rep =
 						  | _ -> (false,[]))
 	       | TermArithmeticIntDiv(t21,t22) -> (match rterm1 with
 						    TermArithmeticIntDiv(t11,t12) -> let uni1 = unify t11 t21 rep in
+						      if fst uni1 then unify t12 t22 (snd uni1)
+						      else (false,[])
+						  | _ -> (false,[]))
+	       | TermArithmeticModulo(t21,t22) -> (match rterm1 with
+						    TermArithmeticModulo(t11,t12) -> let uni1 = unify t11 t21 rep in
 						      if fst uni1 then unify t12 t22 (snd uni1)
 						      else (false,[])
 						  | _ -> (false,[]))

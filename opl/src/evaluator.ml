@@ -34,6 +34,8 @@ let rec get_variables term list =
       | TermArithmeticMult(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticDiv(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticIntDiv(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticModulo(t1,t2) -> get_variables t2 (get_variables t1 list)
+      | TermArithmeticRemainder(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticEquality(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticInequality(t1,t2) -> get_variables t2 (get_variables t1 list)
       | TermArithmeticLess(t1,t2) -> get_variables t2 (get_variables t1 list)
@@ -123,6 +125,14 @@ let rec arithmetic_eval term =
 	  | Integer i1 -> (match n2 with
 			       Float fl2 -> raise Not_integer
 			     | Integer i2 -> Integer (i1 / i2)))
+    | TermArithmeticModulo(t1,t2) -> let n1 = (arithmetic_eval t1) 
+				   and n2 = (arithmetic_eval t2)
+      in
+	(match n1 with
+	    Float fl1 -> raise Not_integer
+	  | Integer i1 -> (match n2 with
+			       Float fl2 -> raise Not_integer
+			     | Integer i2 -> Integer (i1 mod i2)))
     | _ -> raise Not_a_number
       
 
