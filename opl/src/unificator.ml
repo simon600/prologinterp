@@ -58,29 +58,6 @@ let rec print_replacement rep =
     | (v,rep_term)::trep -> print_string (v^" = "^(string_of_term rep_term)^"   "); print_replacement trep;;
 
 
-
-(* replaces occurances of var in term with rep_term *)
-(*let rec replace_var term var rep_term =
-  let rep term =
-    replace_var term var rep_term
-  in
-  match term with
-      TermOr(t1,t2) -> TermOr(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermAnd(t1,t2) -> TermAnd(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermVariable v ->
-	if v = var then rep_term else term
-    | TermFunctor(nam,args) -> TermFunctor(nam,List.map rep args)
-    | TermIs(t1,t2) -> TermIs(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermArithmeticPlus(t1,t2) -> TermArithmeticPlus(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermArithmeticMinus(t1,t2) -> TermArithmeticPlus(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermArithmeticMult(t1,t2) -> TermArithmeticMinus(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermArithmeticDiv(t1,t2) -> TermArithmeticMult(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermArithmeticEquality(t1,t2) -> TermArithmeticEquality(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | TermTermEquality(t1,t2) -> TermTermEquality(replace_var t1 var rep_term, replace_var t2 var rep_term)
-    | _ -> term*)
-
-
-
 (* appends a replacement to a term *)
 let rec replace term replacement = 
   let rep term' =                       (* used for maping in TermFunctor *)
@@ -151,7 +128,6 @@ let rec unify term1 term2 rep =
   and rterm2 = replace term2 rep
   
   in
-    ((*print_string ((string_of_term rterm1)^" = "^(string_of_term rterm2)^"\n\n");*)
     if rterm1 = rterm2 then (true,rep)  (* terms are the same *)
     else
       match rterm1 with
@@ -315,7 +291,7 @@ let rec unify term1 term2 rep =
 							 | _ -> (false,[]))
 		   
 							 
-	       | _ -> if rterm1 = rterm2 then (true,rep) else (false,[])))
+	       | _ -> if rterm1 = rterm2 then (true,rep) else (false,[]))
 
 
 
