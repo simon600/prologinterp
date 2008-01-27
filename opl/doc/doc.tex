@@ -71,6 +71,51 @@
 	\subsection{Podzia³ fizyczny}
 	
 \section{Dodatek A - operatory}
+	\begin{description}
+	\item \textbf{Operatory infixowe: }
+		\begin{center}
+		\small
+		\begin{tabular}{|c|l|}\hline
+		\multicolumn{1}{|c|}{Operator} & \multicolumn{1}{|c|}{Dzia³anie}\\\hline\hline
+
+		= & unifikacja termów, unifikuje termy jeœli to mo¿liwe i zwraca podstawienie\\\hline
+		$\backslash$= & odpowiada na pytanie, czy termy siê nie unifikuj¹\\\hline
+		is & ewaluuje praw¹ stronê i podstawia pod zmienn¹ z lewej strony\\\hline
+		== & sprawdza czy termy s¹ identyczne\\\hline
+		$\backslash$== & sprawdza czy termy nie s¹ identyczne\\\hline
+		=:= & sprawdza czy wyra¿enia arytmetyczne po obu stronach daj¹ ten sam wynik\\\hline
+		=$\backslash$= & sprawdza czy wyra¿enia arytmetyczne po obu stronach daj¹ ró¿ny wynik\\\hline
+		$<$ & sprawdza czy wyra¿enie arytmetyczne po lewej stronie daje mniejszy wynik\\\hline
+		$>$ & sprawdza czy wyra¿enie arytmetyczne po lewej stronie daje wiêkszy wynik\\\hline
+		$<$= & sprawdza czy wyra¿enie arytmetyczne po lewej stronie daje mniejszy lub równy wynik\\\hline
+		$>$= & sprawdza czy wyra¿enie arytmetyczne po lewej stronie daje wiêkszy lub równy wynik\\\hline
+		+ & sumowanie wyra¿eñ arytmetycznych\\\hline
+		- & odejmowanie wyra¿eñ arytmetycznych\\\hline
+		* & mno¿enie wyra¿eñ arytmetycznych\\\hline
+		/ & dzielenie wyra¿eñ arytmetycznych\\\hline
+		// & dzielenie ca³kowite wyra¿eñ arytmetycznych\\\hline
+		, & koniunkcja\\\hline
+		; & alternatywa\\\hline
+		\end{tabular}
+		\end{center}	
+
+
+\item \textbf{Operatory bezargumentowe: }
+		\begin{center}
+		\small
+		\begin{tabular}{|c|l|}\hline
+		\multicolumn{1}{|c|}{Operator} & \multicolumn{1}{|c|}{Dzia³anie}\\\hline\hline
+
+		! & obciêcie, jest zawsze prawdziwy i powoduje, ¿e nie s¹ obliczane alternatywne\\
+		  & œcie¿ki wnioskowania\\\hline
+		rel($a_1,a_2,...,a_k$) & zapytanie do bazy danych o prawdziwoœæ relacji "rel" na\\
+		& argumentach $a_1,a_2,...,a_k$\\\hline
+		\end{tabular}
+		\end{center}	
+
+
+	\end{description}
+
 \section{Dodatek B - gramatyka}{\label{Appendix:grammar}}
 	
 	\begin{grammar}
