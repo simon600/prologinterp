@@ -29,6 +29,7 @@
        REM MOD DIVS MODS DIVU MODU POWER BITWISE_AND
        BITWISE_OR BITWISE_NOT VAR_INSTANTIATED
 %token SEMICOLON COMMA COLON
+%token UMINUS UPLUS
 %token CUT
 %token LPAREN RPAREN LBRACKET RBRACKET PIPE 
 
@@ -430,21 +431,29 @@ name:
 ;
 
 number:
-    | UNSIGNEDFLOAT
+    | UNSIGNEDFLOAT 
     {
-        Types.Float $1 
+        Types.Float ($1)
     }
-    | UNSIGNEDINTEGER 
-    { 
-        Types.Integer $1 
-    }
-    | SIGNEDFLOAT
+    | UNSIGNEDINTEGER
     {
-        Types.Float $1 
+        Types.Integer ($1)
     }
-    | SIGNEDINTEGER 
+    | MINUS UNSIGNEDFLOAT %prec UMINUS
+    {
+        Types.Float (-. $2) 
+    }
+    | MINUS UNSIGNEDINTEGER %prec UMINUS
     { 
-        Types.Integer $1 
+        Types.Integer (-$2) 
+    }
+    | PLUS UNSIGNEDFLOAT %prec UPLUS
+    {
+        Types.Float ($2)
+    }
+    | PLUS UNSIGNEDINTEGER %prec UPLUS
+    {
+        Types.Integer ($2)
     }
 %%  
 
