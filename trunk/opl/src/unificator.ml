@@ -35,7 +35,7 @@ let rec string_of_term term =
     | TermArithmeticEquality(t1,t2) -> (string_of_term t1)^" =:= "^(string_of_term t2)
     | TermArithmeticInequality(t1,t2) -> (string_of_term t1)^" =\\= "^(string_of_term t2)
     | TermArithmeticLess(t1,t2) -> (string_of_term t1)^" < "^(string_of_term t2)
-    | TermArithmeticGreater(t1,t2) -> (string_of_term t1)^" >= "^(string_of_term t2)
+    | TermArithmeticGreater(t1,t2) -> (string_of_term t1)^" > "^(string_of_term t2)
     | TermArithmeticLeq(t1,t2) -> (string_of_term t1)^" <= "^(string_of_term t2)
     | TermArithmeticGeq(t1,t2) -> (string_of_term t1)^" >= "^(string_of_term t2)
     | TermTermEquality(t1,t2) -> (string_of_term t1)^" == "^(string_of_term t2)
@@ -151,6 +151,7 @@ let rec unify term1 term2 rep =
   and rterm2 = replace term2 rep
   
   in
+    ((*print_string ((string_of_term rterm1)^" = "^(string_of_term rterm2)^"\n\n");*)
     if rterm1 = rterm2 then (true,rep)  (* terms are the same *)
     else
       match rterm1 with
@@ -314,7 +315,7 @@ let rec unify term1 term2 rep =
 							 | _ -> (false,[]))
 		   
 							 
-	       | _ -> if rterm1 = rterm2 then (true,rep) else (false,[]))
+	       | _ -> if rterm1 = rterm2 then (true,rep) else (false,[])))
 
 
 
