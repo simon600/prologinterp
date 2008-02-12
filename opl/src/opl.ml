@@ -42,8 +42,8 @@ let read_database params =
             | Sys_error s ->    (* case of system error *)
                 print_endline ((Filename.basename filename)^ ": " ^ s)       
             | End_of_file ->    (* shouldn't happen, but who knows *)
-                print_endline ((Filename.basename filename)^ ": could not read from file" );                                                   
-            | Lexer.EOF   -> () (* lexer has nothing to lex left *)                                                            
+                print_endline ((Filename.basename filename)^ ": could not read
+                from file" );                                                         
             |     _       ->    (* handling other cases *)
                 print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.")
     in
