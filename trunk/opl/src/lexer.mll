@@ -2,8 +2,6 @@
 {
         open Parser;;
 
-        exception EOF;;         (* raised when parsing ends *)
-
         (* predefined operators list.  
          * semantics at: 
          * http://www.trinc-prolog.com/doc/pl_pred.htm
@@ -96,7 +94,7 @@ let whitespace = [' ' '\t' '\n']
 
 rule token = parse
         | eof
-        {       raise EOF       }
+        {       EOF       }
 
         | whitespace 
         {       token lexbuf    }
@@ -148,7 +146,7 @@ and single_line_comment = parse
         {       token lexbuf    }
        
         | eof
-        {       raise EOF       }
+        {       EOF       }
 
         |   _ 
         {       single_line_comment lexbuf       }

@@ -40,12 +40,10 @@ let read_database params =
                end
         with 
             | Sys_error s ->    (* case of system error *)
-                print_endline ((Filename.basename filename)^ ": " ^ s)       
-            | End_of_file ->    (* shouldn't happen, but who knows *)
-                print_endline ((Filename.basename filename)^ ": could not read
-                from file" );                                                         
+                print_endline ((Filename.basename filename)^ ": " ^ s)                                                           
             |     _       ->    (* handling other cases *)
-                print_endline ((Filename.basename filename) ^ ": " ^ " Error occured.")
+                print_endline ((Filename.basename filename) ^ ": " ^ " Error
+                occured.")
     in
     begin
         let parameters = match Array.length params with              (* the first argument of the program is it's name *)
@@ -79,8 +77,6 @@ let main () =
 		    buff := Lexing.from_string(read_line());	(* read the expression *)
 		    interpret (Parser.query Lexer.token !buff) database;    (* create it's syntax tree*)		    
                 with
-                    | Lexer.EOF -> print_endline "L-EOF!"       (* lexer finished his job on this input *)       
-                     
                     | Failure ("lexing: empty token")           (* lexing failure *)
                     | Parsing.Parse_error ->                    (* parsing failure *)
                                     print_endline "Parse error. Did you forget a dot?"
@@ -88,8 +84,7 @@ let main () =
            done
 	with
 	    | End_of_file -> (print_string "\n"; exit 0)
-            (*|   Failure s -> (print_endline s; exit 0)*)
-           (* |      _      -> (print_endline "Error occured."; exit 0)*)
+            |      _      -> (print_endline "Error occured."; exit 0)
 ;;
 
 let _ = main ()  
