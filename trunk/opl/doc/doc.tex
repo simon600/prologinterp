@@ -52,8 +52,13 @@
 	\subsection{Formu³owanie zapytañ}
 	
 	Po wczytaniu baz wiedzy, interpreter przechodzi do trybu zapytañ. Szczegó³owa sk³adnia zapytañ znajduje siê
-	w dodatku B. \ref{Appendix:grammar}; symbolem startowym gramatyki w tym wypadku jest \textit{<query>}.		
+	w dodatku B. \ref{Appendix:grammar}; symbolem startowym gramatyki w tym wypadku jest \verb'<query>'.	\\
 	
+	Uwaga:
+	\begin{enumerate}
+	\item Interpreter zezwala na zadawanie zapytan postaci $X=f(X)$. W tym wypadku zostanie wypisane podstawienie $X = f(X)$.
+ 	\item Interpreter nie zezwala na uzycie funktorów bezargumentowych. 	
+	\end{enumerate}
 \section{System wnioskowania}
 	System wnioskowania dzia³a w doœæ prosty sposób. Interpreter zapytany o jak¹œ relacjê zaczyna przegl¹danie po kolei bazy wiedzy. Stara siê zunifikowaæ zapytanie z faktem lub nastêpnikiem implikacji w bazie danych.
 
@@ -64,7 +69,6 @@
 	W trakcie wnioskowania zapamiêtywane s¹ inne mo¿liwe œcie¿ki dowodu. Po zwróceniu wyniku u¿ytkownik jest pytany, czy chce szukaæ innych rozwi¹zañ.
 
 	W wypadku natrafienia na operator odciêcia program nie zapamiêtuje dalszych œcie¿ek obliczeñ, w ten sposób mo¿na przerwaæ obliczenia, które mog¹ trwaæ w nieskoñczonoœæ (do przepe³nienia stosu).
-
 	
 \section{Budowa interpretera}
 	\subsection{Podzia³ logiczny}
@@ -171,7 +175,7 @@
 		[(quote){}{}]
 		[(nonterminal){$\langle$}{$\rangle$}]
 		
-		<sentence list> : <clause> "\verb'.'" <sentence list> ; <clause> "\verb'..'" .		
+		<sentence list> : <clause> "\verb'.'" <sentence list> ; <clause> "\verb'.'".		
 		<query> : <clause> "\verb'.'" .
 		<clause> : <head> "\verb':-'" <body> ; <head> .	
 		<head> : <goal> .		

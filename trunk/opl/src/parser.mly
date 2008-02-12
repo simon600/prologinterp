@@ -31,7 +31,8 @@
 %token SEMICOLON COMMA COLON
 %token UMINUS UPLUS
 %token CUT
-%token LPAREN RPAREN LBRACKET RBRACKET PIPE 
+%token LPAREN RPAREN LBRACKET RBRACKET PIPE
+%token EOF
 
 %right SEMICOLON COMMA
 %left PLUS MINUS
@@ -68,7 +69,7 @@ clause_list:
     {
         $1 :: $3 
     }
-    | clause DOUBLEDOT 
+    | clause DOT EOF 
     { 
         [$1] 
     } 
