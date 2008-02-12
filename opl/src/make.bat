@@ -21,3 +21,4 @@ del lexer.ml
 del parser.mli
 del parser.ml
 echo Finished.
+PAUSE
