@@ -3,9 +3,7 @@ open Unificator;;
 
 exception Not_a_number;;
 exception Cant_evaluate;;
-exception No_more_conts;;
 exception Not_integer;;
-exception Cut of (bool * (name * term) list);;
 
 let c = ref 0 (* used by get_unique_var *)
 
@@ -136,19 +134,6 @@ let rec arithmetic_eval term =
     | _ -> raise Not_a_number
       
 
-(* asks if evaluation should be continued *)
-let more() =
-  print_string "More?\n";
-  if read_line() = ";" then true
-  else false
-
-let conts = ref []    (* stores calculations to continue *)
-let add_cont cont =   (* adds calculations continuation to conts *)
-  conts := cont::!conts
-let get_cont() =      (* gets next continuation and removes it from conts *)
-  match !conts with
-      [] -> raise No_more_conts
-    | cont::conts' -> (conts := conts'; cont)
 
 
 (* evaluates functor 
@@ -157,138 +142,132 @@ database is a database loaded into the program
 rep is a replacement
 clauses is a list of clauses from database that haven't beed checked yet
 cont is a continuation *)
-let rec functor_eval functor_term database rep clauses cont =
+let rec functor_eval functor_term database rep clauses sc fc cut_c =
   let term = replace functor_term rep in (* replace variables in term *)
     match clauses with
-	[] -> cont (false,[]) (* no more facts or implications in database *)
+	[] -> sc (false,[]) fc (* no more facts or implications in database *)
       | dclause::clauses' -> 
 	  let clause = make_unique dclause in
 	  (match clause with
 	       SingleClause dterm -> let uni = (unify term dterm rep)   (* found a fact in database *)
 	       in
 		 if fst uni then
-		   (add_cont (fun () -> functor_eval term database rep clauses' cont); cont uni) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
-		 else functor_eval term database rep clauses' cont (* term doesn't unify with fact, so try another possibilities *)
+		   sc uni
+		     (fun() -> functor_eval term database rep clauses' sc fc cut_c) (* term unifies with fact in database, so store rest of possible calculations and return result of unification *)
+		 else
+		   functor_eval term database rep clauses' sc fc cut_c (* term doesn't unify with fact, so try another possibilities *)
 	     | ClauseImplication(dterm,condition) -> 		 
 		 let uni = (unify term dterm rep) (* found an implication in database, try to unificate with it's resault (left side term) *)
 	       in		 
-		 if fst uni then
-		   try
-		     add_cont (fun () -> functor_eval term database rep clauses' cont);
-		     evaluate condition database (snd uni) database 
-		       (fun vt -> (add_cont (fun () -> functor_eval term database rep clauses' cont); cont vt))
-		   with
-		       Cut ret_value -> cont ret_value (* handle cut operator *)
-		 else functor_eval term database rep clauses' cont)
-	  (* evaluates terms *)
-and evaluate term database rep clauses cont =
+		 if fst uni then		   
+		   evaluate condition database (snd uni) database 
+		     (fun vt fc' -> sc vt fc') (fun () -> functor_eval term database rep clauses' sc fc cut_c) fc
+		 else functor_eval term database rep clauses' sc fc cut_c)
+	    
+(* evaluates terms *)
+and evaluate term database rep clauses sc fc cut_c =
   let repterm = replace term rep             (* apply replacement to the term *)
   in
   match repterm with
-      TermTermUnify(term1,term2) -> cont (unify term1 term2 rep)
+      TermTermUnify(term1,term2) -> sc (unify term1 term2 rep) fc
     | TermTermNotUnify(term1,term2) -> 
 	let uni = unify term1 term2 rep in
-	  cont (not (fst uni), snd uni)
-    | TermArithmeticEquality(t1,t2) -> let n1 = arithmetic_eval t1 (* find value of left  term *)
-				       and n2 = arithmetic_eval t2 (* find value of right term *)
+	  sc (not (fst uni), snd uni) fc
+    | TermArithmeticEquality(t1,t2) ->
+	let n1 = arithmetic_eval t1 (* find value of left  term *)
+	and n2 = arithmetic_eval t2 (* find value of right term *)
       in
-	if n1 = n2 then cont (true,rep)
-      else cont (false,[])
+	if n1 = n2 then sc (true,rep) fc
+      else sc (false,[]) fc
     | TermArithmeticInequality(t1,t2) -> let n1 = arithmetic_eval t1
 				       and n2 = arithmetic_eval t2
       in
-	if n1 = n2 then cont (false,[])
-      else cont (true,rep)
+	if n1 = n2 then sc (false,[]) fc
+      else sc (true,rep) fc
     | TermArithmeticLess(t1,t2) -> let n1 = arithmetic_eval t1
 				   and n2 = arithmetic_eval t2
       in
 	(match n1 with
 	    Float x1 ->
 	      (match n2 with
-		   Float x2 -> cont (x1 < x2,rep)
-		 | Integer i2 -> cont (x1 < float_of_int i2,rep))
+		   Float x2 -> sc (x1 < x2,rep) fc
+		 | Integer i2 -> sc (x1 < (float_of_int i2),rep) fc)
 	  | Integer i1 ->
 	      (match n2 with
-		   Float x2 -> cont (float_of_int i1 < x2,rep)
-		 | Integer i2 -> cont (i1 < i2,rep)))
+		   Float x2 -> sc (float_of_int i1 < x2,rep) fc
+		 | Integer i2 -> sc (i1 < i2,rep) fc))
     | TermArithmeticGreater(t1,t2) -> let n1 = arithmetic_eval t1
 				      and n2 = arithmetic_eval t2
       in
 	(match n1 with
 	    Float x1 ->
 	      (match n2 with
-		   Float x2 -> cont (x1 > x2,rep)
-		 | Integer i2 -> cont (x1 > float_of_int i2,rep))
+		   Float x2 -> sc (x1 > x2,rep) fc
+		 | Integer i2 -> sc (x1 > float_of_int i2,rep) fc)
 	  | Integer i1 ->
 	      (match n2 with
-		   Float x2 -> cont (float_of_int i1 > x2,rep)
-		 | Integer i2 -> cont (i1 > i2,rep)))
+		   Float x2 -> sc (float_of_int i1 > x2,rep) fc
+		 | Integer i2 -> sc (i1 > i2,rep) fc))
     | TermArithmeticLeq(t1,t2) -> let n1 = arithmetic_eval t1
 				  and n2 = arithmetic_eval t2
       in
 	(match n1 with
 	    Float x1 ->
 	      (match n2 with
-		   Float x2 -> cont (x1 <= x2,rep)
-		 | Integer i2 -> cont (x1 <= float_of_int i2,rep))
+		   Float x2 -> sc (x1 <= x2,rep) fc
+		 | Integer i2 -> sc (x1 <= float_of_int i2,rep) fc)
 	  | Integer i1 ->
 	      (match n2 with
-		   Float x2 -> cont (float_of_int i1 <= x2,rep)
-		 | Integer i2 -> cont (i1 <= i2,rep)))
+		   Float x2 -> sc (float_of_int i1 <= x2,rep) fc
+		 | Integer i2 -> sc (i1 <= i2,rep) fc))
     | TermArithmeticGeq(t1,t2) -> let n1 = arithmetic_eval t1
 				  and n2 = arithmetic_eval t2
       in
 	(match n1 with
 	    Float x1 ->
 	      (match n2 with
-		   Float x2 -> cont (x1 >= x2,rep)
-		 | Integer i2 -> cont (x1 >= float_of_int i2,rep))
+		   Float x2 -> sc (x1 >= x2,rep) fc
+		 | Integer i2 -> sc (x1 >= float_of_int i2,rep) fc)
 	  | Integer i1 ->
 	      (match n2 with
-		   Float x2 -> cont (float_of_int i1 >= x2,rep)
-		 | Integer i2 -> cont (i1 >= i2,rep)))
-    | TermNegation t -> evaluate t database rep clauses (fun vt -> cont (not (fst vt), snd vt))
-    | TermTermEquality(t1,t2) -> cont (t1 = t2,rep)
+		   Float x2 -> sc (float_of_int i1 >= x2,rep) fc
+		 | Integer i2 -> sc (i1 >= i2,rep) fc))
+    | TermNegation t ->
+	evaluate t database rep clauses
+	  (fun vt fc' -> sc (not (fst vt), snd vt) fc') fc cut_c
+    | TermTermEquality(t1,t2) -> sc (t1 = t2,rep) fc
     | TermIs(t1,t2) -> let n2 = TermConstant (ConstantNumber (arithmetic_eval t2))
       in
-	cont (unify t1 n2 [])
-    | TermFunctor(nam,args) -> functor_eval repterm database rep clauses cont
+	sc (unify t1 n2 []) fc
+    | TermFunctor(nam,args) -> functor_eval repterm database rep clauses sc fc cut_c
     | TermAnd(t1,t2) -> 
 	evaluate t1 database rep clauses (* evaluate first term *)
-	  (fun vt1 ->
+	  (fun vt1 fc1 ->
 	     if fst vt1 then
-	       evaluate t2 database (snd vt1) clauses (fun vt2 -> cont vt2) (* if first term returns true in evaluation then the other one will be tried to be evaluated *)
-	     else cont (false,[]))
-    | TermOr(t1,t2) -> (add_cont (fun () -> evaluate t2 database rep clauses cont); (* add another evaluation possibility to conts *)
-			evaluate t1 database rep clauses (fun vt -> cont vt)) (* evaluate first term *)
-    | TermCut -> raise (Cut (true,rep))
+	       evaluate t2 database (snd vt1) clauses
+		 (fun vt2 fc2 -> sc vt2 fc2) fc1 cut_c (* if first term returns true in evaluation then the other one will be tried to be evaluated *)
+	     else sc (false,[]) fc1) fc cut_c
+    | TermOr(t1,t2) -> evaluate t1 database rep clauses
+	(fun vt fc' -> sc vt fc')
+	  (fun () -> evaluate t2 database rep clauses sc fc cut_c) cut_c (* evaluate first term *)
+    | TermCut -> sc (true,rep) cut_c
     | _ -> raise Cant_evaluate
 
 (* evaluates all possible ways a term given a specific database *)
 let interpret term database =
-  let continue = ref true
-  and eval = ref (false,[]) (* stores result of evaluation *)
-  and cont = ref (fun() -> (false,[])) (* stores calculations *)
+  (* asks if evaluation should be continued *)
+  let more() =
+    print_string "More?\n";
+    if read_line() = ";" then true
+    else false
   and filter replacement = (* filters replacement that only variables that exist in term remains *)
     let variables = (get_variables term []) in
     List.filter (fun (var,_) -> List.exists (fun v -> v = var) variables) replacement
   in
-    (conts := []; (* clear conts *)
-     add_cont (fun () -> evaluate term database [] database (fun v -> v)); (* add first evaluation to conts *)
-     (* evaluate paths of calculations while they are availible and user whishes to continue *)
-     while (List.length !conts > 0 && !continue) do
-       (cont := get_cont(); (* get another evaluation *)
-	eval := !cont(); (* invoke it *)
-	if (fst !eval) then
-	  (print_string "Yes\n";
-	   print_replacement (filter (snd !eval));
-	   print_endline "";
-	   if List.length !conts > 0 then
-	     continue := more()
-	   else ())
-	else
-	  if (List.length !conts) = 0 then
-	    (print_string "No\n";
-	     continue := true)
-	  else ())
-     done)
+    evaluate term database [] database
+      (fun vt fc -> if fst vt then
+	 (print_string "Yes\n"; print_replacement (filter (snd vt)); print_endline "";
+	  if more() then fc() else ())
+       else
+	 fc())
+      (fun () -> print_string "No\n") (fun () -> ())
